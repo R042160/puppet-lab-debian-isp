@@ -1,0 +1,20 @@
+---
+# hiera.yaml v5 — Puppet 8 compatible.
+#
+# Defines WHERE Puppet looks for class parameters at compile time.
+# When a class declares `$param`, Puppet performs an automatic lookup
+# for "<class>::<param>" in the hierarchy below, *before* falling back
+# to the manifest default (if any).
+#
+# Current hierarchy: a single "common.yaml" applied to every node.
+# Future levels could be added: per-node, per-environment, per-osfamily.
+
+version: 5
+
+defaults:
+  datadir: data
+  data_hash: yaml_data
+
+hierarchy:
+  - name: "Common defaults"
+    path: "common.yaml"

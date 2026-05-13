@@ -1,11 +1,14 @@
 # == Class: isp_postfix
 #
 # Installs Postfix with a local-only delivery profile. No internet relay.
-# DKIM/SPF/DMARC are explicit next-step learnings, not part of v0.
+# DKIM/SPF/DMARC are explicit next-step learnings, not part of v0.1.
+#
+# myhostname / mydomain MUST be provided via Hiera — they are
+# environment-specific.
 #
 class isp_postfix (
-  String $myhostname = 'puppet-lab.local',
-  String $mydomain   = 'lab.local',
+  String $myhostname,
+  String $mydomain,
 ) {
 
   # debconf preseeding so postfix install is fully non-interactive

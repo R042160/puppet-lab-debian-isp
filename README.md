@@ -79,13 +79,15 @@ docker compose up -d
 
 ## Lernpfad
 
+*Aktuelle Version: **v0.1** – Hiera-Layer eingeführt, Daten aus Manifesten ausgelagert.*
+
 - [x] Repo-Struktur + docker-compose
 - [x] `isp_bind` Modul (Package + Service + named.conf.options)
 - [x] `isp_dhcp` Modul (Package + Service + dhcpd.conf)
 - [x] `isp_postfix` Modul (Package + Service + main.cf)
 - [x] `isp_nginx` Modul (Package + Service + default-site)
 - [x] `scripts/apply.sh` + `scripts/smoke.sh`
-- [ ] Hiera-Refactor (Daten aus Manifesten ziehen)
+- [x] **Hiera-Refactor** (Daten aus Manifesten ausgelagert) → `hiera.yaml` + `data/common.yaml`
 - [ ] PDK-Init für jedes Modul (`pdk new module`)
 - [ ] rspec-puppet Smoke-Test
 - [ ] Master/Agent statt apply

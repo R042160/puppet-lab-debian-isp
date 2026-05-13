@@ -10,6 +10,8 @@ services:
       - ./manifests:/lab/manifests:ro
       - ./modules:/lab/modules:ro
       - ./scripts:/lab/scripts:ro
+      - ./hiera.yaml:/lab/hiera.yaml:ro
+      - ./data:/lab/data:ro
     tmpfs:
       - /run
       - /run/lock

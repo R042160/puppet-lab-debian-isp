@@ -5,6 +5,10 @@
 #
 # Idempotent: a second puppet apply produces 0 events.
 #
+# Parameters are resolved via Hiera automatic parameter lookup
+# (key: isp_bind::<param>). The manifest default below acts as a
+# resilient fallback if Hiera does not provide a value.
+#
 class isp_bind (
   Boolean $listen_v6 = true,
 ) {

@@ -1,10 +1,12 @@
 # == Class: isp_nginx
 #
 # Installs Nginx with a managed default vhost that serves a lab landing page.
-# TLS is intentionally NOT configured at v0 (next learning step: certbot).
+# TLS is intentionally NOT configured at v0.1 (next learning step: certbot).
+#
+# $server_name MUST be provided via Hiera.
 #
 class isp_nginx (
-  String $server_name = 'puppet-lab.local',
+  String $server_name,
 ) {
 
   package { 'nginx':

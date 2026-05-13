@@ -1,0 +1,24 @@
+---
+# Hiera data shared by all nodes in this lab.
+#
+# Puppet performs automatic parameter lookup for keys of the form
+# "<class>::<param>". Override per-node by adding additional levels
+# in hiera.yaml.
+
+# ─── isp_bind ──────────────────────────────────────────────────────
+isp_bind::listen_v6: true
+
+# ─── isp_dhcp ──────────────────────────────────────────────────────
+# RFC 5737 TEST-NET-1 (documentation-only address space)
+isp_dhcp::subnet:      '192.0.2.0'
+isp_dhcp::netmask:     '255.255.255.0'
+isp_dhcp::range_start: '192.0.2.100'
+isp_dhcp::range_end:   '192.0.2.200'
+isp_dhcp::router:      '192.0.2.1'
+
+# ─── isp_postfix ───────────────────────────────────────────────────
+isp_postfix::myhostname: 'puppet-lab.local'
+isp_postfix::mydomain:   'lab.local'
+
+# ─── isp_nginx ─────────────────────────────────────────────────────
+isp_nginx::server_name: 'puppet-lab.local'

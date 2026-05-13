@@ -3,12 +3,16 @@
 # Installs and configures isc-dhcp-server with a single sample subnet.
 # This is a learning-lab setup; do not run on a real LAN segment.
 #
+# All parameters are MANDATORY and must be provided via Hiera.
+# This is intentional: subnet / range / router are environment-specific
+# data and must never be hard-coded in the manifest.
+#
 class isp_dhcp (
-  String $subnet  = '192.0.2.0',
-  String $netmask = '255.255.255.0',
-  String $range_start = '192.0.2.100',
-  String $range_end   = '192.0.2.200',
-  String $router      = '192.0.2.1',
+  String $subnet,
+  String $netmask,
+  String $range_start,
+  String $range_end,
+  String $router,
 ) {
 
   package { 'isc-dhcp-server':
@@ -31,9 +35,9 @@ class isp_dhcp (
     notify  => Service['isc-dhcp-server'],
   }
 
-  # Service may fail to start without a real bound interface — that's expected
-  # in a single-container lab. We still declare the resource so the manifest
-  # stays honest about intent.
+  # Service may fail to start without a real bound interface — that's
+  # expected in a single-container lab. We still declare the resource
+  # so the manifest stays honest about intent.
   service { 'isc-dhcp-server':
     ensure  => running,
     enable  => true,

@@ -20,5 +20,7 @@ ENV PATH="/opt/puppetlabs/bin:${PATH}"
 WORKDIR /lab
 COPY manifests/ /lab/manifests/
 COPY modules/   /lab/modules/
+COPY hiera.yaml /lab/hiera.yaml
+COPY data/      /lab/data/
 
 CMD ["bash", "-c", "tail -f /dev/null"]

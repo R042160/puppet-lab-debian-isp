@@ -145,3 +145,34 @@ Das macht Puppet/Salt zum nächsten logischen Schritt nach „Bash-Skripte mit K
 1. GitHub Actions mit `bundle exec rake spec`.
 2. Ein Script fuer `puppet-lint` + `metadata-json-lint`.
 3. Optional: negative AXFR-Test von einem nicht erlaubten Container/IP.
+
+## v0.5 – GitHub Actions CI + statischer Lint (Mai 2026)
+
+### Was geändert wurde
+
+- Neues `scripts/lint.sh` als lokaler und CI-kompatibler Static-Check:
+  - Bash-Syntax für Scripts.
+  - YAML-Syntax für Hiera-Daten.
+  - `puppet parser validate` für Manifests.
+  - `puppet epp validate` für Templates.
+  - `puppet-lint` für Puppet-Stil.
+  - `metadata-json-lint` für Modul-Metadaten.
+- Neuer GitHub-Actions-Workflow `.github/workflows/ci.yml`.
+- CI läuft auf Pushes nach `main`, Pull Requests und manuell via `workflow_dispatch`.
+- CI führt aus:
+  - `bundle exec rake spec`
+  - `./scripts/lint.sh`
+  - `docker compose config`
+
+### Was ich dabei gelernt habe
+
+- **CI ist ein Reviewer, der nie vergisst.** Jeder Push prüft dieselben Regeln, statt auf Erinnerung oder manuelle Disziplin zu vertrauen.
+- **Static CI und Integration Smoke sind getrennt.** GitHub Actions prüft schnell den Catalog und die Syntax. Das lokale Docker-Lab prüft systemd/BIND/AXFR live.
+- **Ein Script ist besser als YAML-Duplikat.** `scripts/lint.sh` ist lokal und im CI gleich. Wenn der Check wächst, muss man ihn nur an einer Stelle ändern.
+- **`docker compose config` ist ein billiger Strukturtest.** Es startet keine Container, aber prüft, ob Compose die Datei interpretieren kann.
+
+### Was als Nächstes kommt (v0.6)
+
+1. Optional: GitHub Actions Badge rot/grün nach erstem Run prüfen.
+2. Optional: negativer AXFR-Test von einer nicht erlaubten IP.
+3. Danach: Postfix + Dovecot + DKIM als nächster ISP-Gap.

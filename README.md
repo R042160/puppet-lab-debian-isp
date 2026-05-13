@@ -7,6 +7,7 @@
 [![Debian 12](https://img.shields.io/badge/Debian-12_Bookworm-A81D33?logo=debian&logoColor=white)](https://www.debian.org/)
 [![Puppet](https://img.shields.io/badge/Puppet-8.x-FFAE1A?logo=puppet&logoColor=black)](https://puppet.com/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docs.docker.com/compose/)
+[![CI](https://github.com/R042160/puppet-lab-debian-isp/actions/workflows/ci.yml/badge.svg)](https://github.com/R042160/puppet-lab-debian-isp/actions/workflows/ci.yml)
 
 ## Ziel
 
@@ -59,6 +60,7 @@ docker compose up -d
 ```bash
 bundle install
 ./scripts/spec.sh         # rspec-puppet: Catalog compiles + Resources existieren
+./scripts/lint.sh         # YAML, Puppet parser, EPP, puppet-lint, metadata lint
 ```
 
 ## Struktur
@@ -69,6 +71,9 @@ bundle install
 ├── Gemfile.lock
 ├── docker-compose.yml
 ├── Dockerfile
+├── .github/
+│   └── workflows/
+│       └── ci.yml          # GitHub Actions: spec + static lint
 ├── data/
 │   ├── common.yaml         # Hiera-Daten fuer Lab-Defaults
 │   └── nodes/              # per-node Overrides, z. B. Secondary-DNS
@@ -85,6 +90,7 @@ bundle install
 │   └── classes/           # rspec-puppet Smoke-Tests
 ├── scripts/
 │   ├── apply.sh
+│   ├── lint.sh
 │   ├── spec.sh
 │   └── smoke.sh
 └── docs/
@@ -106,7 +112,7 @@ bundle install
 
 ## Lernpfad
 
-*Aktuelle Version: **v0.4** – Secondary-DNS mit Notify + AXFR eingeführt.*
+*Aktuelle Version: **v0.5** – GitHub-Actions-CI + statischer Lint eingeführt.*
 
 - [x] Repo-Struktur + docker-compose
 - [x] `isp_bind` Modul (Package + Service + named.conf.options)
@@ -119,6 +125,7 @@ bundle install
 - [x] rspec-puppet Smoke-Test
 - [x] **BIND9 authoritative Zone** (`lab.local` mit SOA, NS, A, AAAA, MX)
 - [x] **BIND9 Secondary-DNS** mit Notify + AXFR
+- [x] **GitHub Actions CI** (`bundle exec rake spec`, `scripts/lint.sh`, `docker compose config`)
 - [ ] Voller PDK-Workflow (`pdk validate`, `pdk test unit`)
 - [ ] Master/Agent statt apply
 - [ ] Salt-Variante zum Vergleich

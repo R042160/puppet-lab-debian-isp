@@ -20,8 +20,8 @@ Selbständig durcharbeiten, was die Stellenausschreibung *„System Engineer mit
 ## Lab-Aufbau
 
 ```
-                 ┌──────────────────────────────────┐
-                 │  puppet-lab (Debian 12 Container) │
+                 ┌───────────────────────────────────┐
+                 │ puppet-lab (Primary DNS + Dienste)│
                  │                                   │
    docker-compose│  ┌────────┐ ┌────────┐ ┌────────┐│
    ───────────▶  │  │ bind9  │ │  dhcp  │ │postfix ││
@@ -31,7 +31,17 @@ Selbständig durcharbeiten, was die Stellenausschreibung *„System Engineer mit
                  │           └────────┘             │
                  │                                   │
                  │  puppet apply manifests/site.pp   │
-                 └──────────────────────────────────┘
+                 └───────────────────────────────────┘
+                                │
+                                │ Notify + AXFR
+                                ▼
+                 ┌───────────────────────────────────┐
+                 │ puppet-lab-secondary (DNS only)   │
+                 │                                   │
+                 │  ┌────────┐                       │
+                 │  │ bind9  │  secondary zone       │
+                 │  └────────┘  /var/cache/bind/...  │
+                 └───────────────────────────────────┘
 ```
 
 ## Quickstart
@@ -40,8 +50,8 @@ Selbständig durcharbeiten, was die Stellenausschreibung *„System Engineer mit
 git clone https://github.com/R042160/puppet-lab-debian-isp.git
 cd puppet-lab-debian-isp
 docker compose up -d
-./scripts/apply.sh        # läuft puppet apply im Container
-./scripts/smoke.sh        # prüft Dienste + DNS-Antworten mit dig
+./scripts/apply.sh        # läuft puppet apply auf Primary + Secondary
+./scripts/smoke.sh        # prüft Dienste, DNS-Antworten und AXFR
 ```
 
 ## Unit-Tests
@@ -60,7 +70,8 @@ bundle install
 ├── docker-compose.yml
 ├── Dockerfile
 ├── data/
-│   └── common.yaml         # Hiera-Daten fuer Lab-Defaults
+│   ├── common.yaml         # Hiera-Daten fuer Lab-Defaults
+│   └── nodes/              # per-node Overrides, z. B. Secondary-DNS
 ├── hiera.yaml              # Hiera-v5-Hierarchie
 ├── manifests/
 │   └── site.pp            # entrypoint, klassifiziert den Node
@@ -84,7 +95,7 @@ bundle install
 
 - **Kein puppet master/agent** – `puppet apply` reicht für ein 1-Node-Lab und macht den Loop schnell. Master/Agent kommt im nächsten Schritt.
 - **Kein voller PDK-Workflow** – die Module haben `metadata.json`, `Gemfile.lock` und rspec-puppet Tests, aber `pdk validate`/`pdk test unit` ist der nächste Schritt.
-- **Kein Secondary-DNS/AXFR-Setup** – `allow-transfer` ist vorbereitet, aber ein zweiter BIND-Node kommt als nächster DNS-Schritt.
+- **Kein echter Multi-Host-Cluster** – Primary/Secondary laufen als Docker-Container in einem Lab-Netz. Für Produktion wäre das auf getrennten Hosts/VMs.
 - **Kein Forge-Module-Reuse** – Ziel ist *Verstehen, wie es funktioniert*, nicht möglichst wenig Code.
 
 ## Was hier bewusst stimmen muss
@@ -95,7 +106,7 @@ bundle install
 
 ## Lernpfad
 
-*Aktuelle Version: **v0.3** – BIND9 authoritative Zone (`lab.local`) eingeführt.*
+*Aktuelle Version: **v0.4** – Secondary-DNS mit Notify + AXFR eingeführt.*
 
 - [x] Repo-Struktur + docker-compose
 - [x] `isp_bind` Modul (Package + Service + named.conf.options)
@@ -107,7 +118,7 @@ bundle install
 - [x] PDK-kompatible Modul-Metadaten (`metadata.json`)
 - [x] rspec-puppet Smoke-Test
 - [x] **BIND9 authoritative Zone** (`lab.local` mit SOA, NS, A, AAAA, MX)
-- [ ] BIND9 Secondary-DNS mit Notify + AXFR
+- [x] **BIND9 Secondary-DNS** mit Notify + AXFR
 - [ ] Voller PDK-Workflow (`pdk validate`, `pdk test unit`)
 - [ ] Master/Agent statt apply
 - [ ] Salt-Variante zum Vergleich

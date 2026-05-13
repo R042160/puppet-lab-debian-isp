@@ -6,8 +6,9 @@
 # for "<class>::<param>" in the hierarchy below, *before* falling back
 # to the manifest default (if any).
 #
-# Current hierarchy: a single "common.yaml" applied to every node.
-# Future levels could be added: per-node, per-environment, per-osfamily.
+# Current hierarchy: per-node overrides first, then shared lab defaults.
+# This lets the primary and secondary DNS nodes use the same Puppet class
+# with different zone roles.
 
 version: 5
 
@@ -16,5 +17,7 @@ defaults:
   data_hash: yaml_data
 
 hierarchy:
+  - name: "Per-node data"
+    path: "nodes/%{trusted.certname}.yaml"
   - name: "Common defaults"
     path: "common.yaml"

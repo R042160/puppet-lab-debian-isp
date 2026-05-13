@@ -110,3 +110,38 @@ Das macht Puppet/Salt zum nächsten logischen Schritt nach „Bash-Skripte mit K
 1. Zweiten BIND-Container als Secondary-DNS anlegen.
 2. `also-notify` + `allow-transfer` praktisch testen.
 3. `dig @secondary lab.local SOA` und Serial-Sync validieren.
+
+## v0.4 – Secondary-DNS mit Notify + AXFR (Mai 2026)
+
+### Was geändert wurde
+
+- `docker-compose.yml` hat jetzt zwei DNS-Nodes im statischen Lab-Netz `172.28.53.0/24`:
+  - `puppet-lab` als Primary auf `172.28.53.10`
+  - `puppet-lab-secondary` als Secondary auf `172.28.53.11`
+- Hiera nutzt jetzt eine Node-Ebene: `data/nodes/%{trusted.certname}.yaml`.
+- `profile::classes` klassifiziert Nodes:
+  - Primary bekommt BIND, DHCP, Postfix und Nginx.
+  - Secondary bekommt nur BIND.
+- `isp_bind::zones` unterstützt jetzt zwei Rollen:
+  - `role: primary` schreibt eine Zone-Datei unter `/etc/bind/zones/`.
+  - `role: secondary` schreibt keine Zone-Datei, sondern konfiguriert `type slave` mit `masters`.
+- Primary erlaubt AXFR nur zur Secondary-IP und sendet Notify dorthin.
+- `scripts/apply.sh` läuft jetzt über beide Container und setzt `--certname`, damit Hiera pro Node greift.
+- `scripts/smoke.sh` prüft:
+  - Primary DNS-Antworten.
+  - Secondary DNS-Antworten nach Transfer.
+  - AXFR vom Secondary-Container gegen den Primary.
+
+### Was ich dabei gelernt habe
+
+- **Node Classification** ist die Entscheidung, welche Klassen ein Node bekommt. In diesem Lab macht Hiera das über `profile::classes`.
+- **Primary vs Secondary** ist nicht einfach zweimal derselbe DNS-Server. Primary hält die Zone-Datei. Secondary holt sie per AXFR und speichert sie unter `/var/cache/bind/`.
+- **Notify ist Beschleunigung, AXFR ist die eigentliche Übertragung.** Notify sagt: "Zone hat sich geändert." AXFR holt dann die Zonendaten.
+- **`trusted.certname` ist der Schalter für per-node Hiera.** `apply.sh` setzt ihn explizit mit `--certname`, damit Docker-Hostnames nicht zufällig entscheiden.
+- **Test auf Transfer braucht Geduld.** `smoke.sh` retryt Secondary-Abfragen, weil BIND den Transfer asynchron startet.
+
+### Was als Nächstes kommt (v0.5)
+
+1. GitHub Actions mit `bundle exec rake spec`.
+2. Ein Script fuer `puppet-lint` + `metadata-json-lint`.
+3. Optional: negative AXFR-Test von einem nicht erlaubten Container/IP.

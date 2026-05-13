@@ -7,8 +7,17 @@
 
 # ─── isp_bind ──────────────────────────────────────────────────────
 isp_bind::listen_v6: true
+
+# ─── node classification ──────────────────────────────────────────
+profile::classes:
+  - 'isp_bind'
+  - 'isp_dhcp'
+  - 'isp_postfix'
+  - 'isp_nginx'
+
 isp_bind::zones:
   'lab.local':
+    role: 'primary'
     ttl: 300
     serial: 2026051301
     primary_ns: 'ns1.lab.local.'
@@ -18,18 +27,26 @@ isp_bind::zones:
     expire: 604800
     negative_ttl: 300
     allow_transfer:
-      - '192.0.2.11'
+      - '172.28.53.11'
+    also_notify:
+      - '172.28.53.11'
     records:
       - name: '@'
         type: 'NS'
         value: 'ns1.lab.local.'
+      - name: '@'
+        type: 'NS'
+        value: 'ns2.lab.local.'
       - name: '@'
         type: 'MX'
         priority: 10
         value: 'mail.lab.local.'
       - name: 'ns1'
         type: 'A'
-        value: '192.0.2.10'
+        value: '172.28.53.10'
+      - name: 'ns2'
+        type: 'A'
+        value: '172.28.53.11'
       - name: 'ns1'
         type: 'AAAA'
         value: '2001:db8::10'
@@ -41,7 +58,7 @@ isp_bind::zones:
         value: '192.0.2.25'
       - name: 'puppet-lab'
         type: 'A'
-        value: '192.0.2.30'
+        value: '172.28.53.10'
 
 # ─── isp_dhcp ──────────────────────────────────────────────────────
 # RFC 5737 TEST-NET-1 (documentation-only address space)

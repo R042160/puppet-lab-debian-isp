@@ -14,7 +14,15 @@ class isp_bind (
   Boolean $listen_v6 = true,
 ) {
 
-  $zone_file_paths = $zones.keys.map |String $zone_name| {
+  $primary_zones = $zones.filter |String $zone_name, Hash $zone| {
+    if $zone['role'] {
+      $zone['role'] == 'primary'
+    } else {
+      true
+    }
+  }
+
+  $primary_zone_file_paths = $primary_zones.keys.map |String $zone_name| {
     "/etc/bind/zones/db.${zone_name}"
   }
 
@@ -42,7 +50,7 @@ class isp_bind (
     require => Package['bind9'],
   }
 
-  $zones.each |String $zone_name, Hash $zone| {
+  $primary_zones.each |String $zone_name, Hash $zone| {
     file { "/etc/bind/zones/db.${zone_name}":
       ensure       => file,
       owner        => 'root',
@@ -58,6 +66,23 @@ class isp_bind (
     }
   }
 
+  if empty($primary_zone_file_paths) {
+    $named_conf_require = Package['bind9']
+    $service_require = [
+      Package['bind9'],
+      File['/etc/bind/named.conf.options'],
+      File['/etc/bind/named.conf.local'],
+    ]
+  } else {
+    $named_conf_require = [Package['bind9'], File[$primary_zone_file_paths]]
+    $service_require = [
+      Package['bind9'],
+      File['/etc/bind/named.conf.options'],
+      File['/etc/bind/named.conf.local'],
+      File[$primary_zone_file_paths],
+    ]
+  }
+
   file { '/etc/bind/named.conf.local':
     ensure  => file,
     owner   => 'root',
@@ -66,18 +91,13 @@ class isp_bind (
     content => epp('isp_bind/named.conf.local.epp', {
       'zones' => $zones,
     }),
-    require => [Package['bind9'], File[$zone_file_paths]],
+    require => $named_conf_require,
     notify  => Service['named'],
   }
 
   service { 'named':
     ensure  => running,
     enable  => true,
-    require => [
-      Package['bind9'],
-      File['/etc/bind/named.conf.options'],
-      File['/etc/bind/named.conf.local'],
-      File[$zone_file_paths],
-    ],
+    require => $service_require,
   }
 }

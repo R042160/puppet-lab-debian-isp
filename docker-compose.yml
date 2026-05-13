@@ -19,3 +19,35 @@ services:
       - "5380:53/udp"       # bind9
       - "5380:53/tcp"
       - "8080:80"           # nginx
+    networks:
+      labnet:
+        ipv4_address: 172.28.53.10
+
+  puppet-lab-secondary:
+    build: .
+    container_name: puppet-lab-secondary
+    hostname: secondary.lab.local
+    privileged: true        # required for systemd inside container
+    cap_add:
+      - SYS_ADMIN
+    volumes:
+      - ./manifests:/lab/manifests:ro
+      - ./modules:/lab/modules:ro
+      - ./scripts:/lab/scripts:ro
+      - ./hiera.yaml:/lab/hiera.yaml:ro
+      - ./data:/lab/data:ro
+    tmpfs:
+      - /run
+      - /run/lock
+    ports:
+      - "5381:53/udp"       # secondary bind9
+      - "5381:53/tcp"
+    networks:
+      labnet:
+        ipv4_address: 172.28.53.11
+
+networks:
+  labnet:
+    ipam:
+      config:
+        - subnet: 172.28.53.0/24

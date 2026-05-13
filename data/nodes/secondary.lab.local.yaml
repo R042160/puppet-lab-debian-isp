@@ -1,0 +1,12 @@
+---
+# Secondary DNS node: only BIND9, zone transferred from the primary.
+
+profile::classes:
+  - 'isp_bind'
+
+isp_bind::zones:
+  'lab.local':
+    role: 'secondary'
+    masters:
+      - '172.28.53.10'
+

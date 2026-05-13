@@ -1,10 +1,14 @@
-# Entrypoint manifest. Applies all four ISP modules to this node.
+# Entrypoint manifest. Hiera decides which lab classes this node receives.
 #
-# Usage: puppet apply --modulepath=/lab/modules /lab/manifests/site.pp
+# Usage: puppet apply --certname=<node> --modulepath=/lab/modules /lab/manifests/site.pp
 
 node default {
-  include isp_bind
-  include isp_dhcp
-  include isp_postfix
-  include isp_nginx
+  $profile_classes = lookup('profile::classes', Array[String[1]], 'first', [
+    'isp_bind',
+    'isp_dhcp',
+    'isp_postfix',
+    'isp_nginx',
+  ])
+
+  include $profile_classes
 }

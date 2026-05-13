@@ -4,7 +4,9 @@
 // Managed by Puppet (module: isp_bind). Manual edits will be overwritten.
 
 <% $zones.each |$zone_name, $zone| { -%>
+<% $zone_role = $zone['role'] ? { undef => 'primary', default => $zone['role'] } -%>
 zone "<%= $zone_name %>" {
+<% if $zone_role == 'primary' { -%>
     type master;
     file "/etc/bind/zones/db.<%= $zone_name %>";
 <% if $zone['allow_transfer'] and !empty($zone['allow_transfer']) { -%>
@@ -14,6 +16,11 @@ zone "<%= $zone_name %>" {
 <% } -%>
 <% if $zone['also_notify'] and !empty($zone['also_notify']) { -%>
     also-notify { <%= $zone['also_notify'].join('; ') %>; };
+<% } -%>
+<% } elsif $zone_role == 'secondary' { -%>
+    type slave;
+    file "/var/cache/bind/db.<%= $zone_name %>";
+    masters { <%= $zone['masters'].join('; ') %>; };
 <% } -%>
 };
 

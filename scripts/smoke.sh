@@ -115,6 +115,7 @@ check "isc-dhcp present (config)" bash -c "[ -f /etc/dhcp/dhcpd.conf ]"
 check "postfix  running"          bash -c "pgrep -x master >/dev/null"
 check "dovecot  running"          bash -c "pgrep -x dovecot >/dev/null"
 check "opendkim running"          bash -c "pgrep -x opendkim >/dev/null"
+check "node exporter running"     bash -c "pgrep -f prometheus-node-exporter >/dev/null"
 check "nginx    running"          bash -c "pgrep -x nginx  >/dev/null"
 
 echo
@@ -144,6 +145,15 @@ check_in "${PRIMARY_CONTAINER}" "restic repository initialized" bash -c "restic 
 check_in "${PRIMARY_CONTAINER}" "restic backup creates snapshot" bash -c "/usr/local/sbin/lab-restic-backup"
 check_in "${PRIMARY_CONTAINER}" "restic restore-check passes" bash -c "/usr/local/sbin/lab-restic-restore-check"
 check_in "${PRIMARY_CONTAINER}" "restic repository integrity" bash -c "restic -r /var/backups/restic/lab-repo --password-file /etc/restic/lab-password check"
+
+echo
+echo "==> Monitoring metrics"
+check_in "${PRIMARY_CONTAINER}" "node exporter listens on 9100" bash -c "timeout 2 bash -c '</dev/tcp/127.0.0.1/9100'"
+check_in "${CLIENT_CONTAINER}" "client reaches node exporter" bash -c "timeout 2 bash -c '</dev/tcp/${PRIMARY_IP}/9100'"
+check_in "${PRIMARY_CONTAINER}" "lab monitoring check writes metrics" bash -c "/usr/local/sbin/lab-monitoring-check"
+check_in "${PRIMARY_CONTAINER}" "node exporter serves base metrics" bash -c "curl -sSf http://127.0.0.1:9100/metrics | grep -q '^node_uname_info'"
+check_in "${PRIMARY_CONTAINER}" "node exporter serves lab service metrics" bash -c "curl -sSf http://127.0.0.1:9100/metrics | grep -q 'puppet_lab_service_up{service=\"named\"} 1'"
+check_in "${PRIMARY_CONTAINER}" "node exporter serves lab backup metric" bash -c "curl -sSf http://127.0.0.1:9100/metrics | grep -q 'puppet_lab_backup_repository_ok 1'"
 
 echo
 echo "==> Primary BIND9 authoritative answers"

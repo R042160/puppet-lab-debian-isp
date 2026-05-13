@@ -16,6 +16,7 @@ profile::classes:
   - 'isp_postfix'
   - 'isp_dovecot'
   - 'isp_backup'
+  - 'isp_monitoring'
   - 'isp_nginx'
 
 isp_bind::zones:
@@ -124,6 +125,24 @@ isp_backup::backup_paths:
   - '/etc/dovecot'
   - '/etc/opendkim'
   - '/lab/data'
+
+# ─── isp_monitoring ────────────────────────────────────────────────
+isp_monitoring::listen_address: '0.0.0.0:9100'
+isp_monitoring::textfile_directory: '/var/lib/node_exporter/textfile_collector'
+isp_monitoring::metrics_file: '/var/lib/node_exporter/textfile_collector/puppet_lab.prom'
+isp_monitoring::services:
+  - 'named'
+  - 'master'
+  - 'dovecot'
+  - 'opendkim'
+  - 'nginx'
+isp_monitoring::tcp_checks:
+  submission:
+    host: '127.0.0.1'
+    port: 587
+  opendkim_milter:
+    host: '127.0.0.1'
+    port: 8891
 
 # ─── isp_nginx ─────────────────────────────────────────────────────
 isp_nginx::server_name: 'puppet-lab.local'

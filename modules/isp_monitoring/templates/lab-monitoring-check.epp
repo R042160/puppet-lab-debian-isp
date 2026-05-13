@@ -1,0 +1,58 @@
+<%- |
+  String[1] $metrics_file,
+  Array[String[1]] $services,
+  Hash[String[1], Hash[String[1], Variant[String[1], Integer[1]]]] $tcp_checks,
+| -%>
+#!/usr/bin/env bash
+# Managed by Puppet (module: isp_monitoring). Manual edits will be overwritten.
+set -euo pipefail
+
+metrics_file='<%= $metrics_file %>'
+tmp_file="${metrics_file}.$$"
+now="$(date +%s)"
+
+mkdir -p "$(dirname "${metrics_file}")"
+
+{
+  echo '# HELP puppet_lab_check_timestamp_seconds Unix timestamp of the last lab monitoring check.'
+  echo '# TYPE puppet_lab_check_timestamp_seconds gauge'
+  printf 'puppet_lab_check_timestamp_seconds %s\n' "${now}"
+
+  echo '# HELP puppet_lab_service_up Whether a lab service process is running.'
+  echo '# TYPE puppet_lab_service_up gauge'
+<% $services.each |$service| { -%>
+  if pgrep -x '<%= $service %>' >/dev/null 2>&1; then
+    echo 'puppet_lab_service_up{service="<%= $service %>"} 1'
+  else
+    echo 'puppet_lab_service_up{service="<%= $service %>"} 0'
+  fi
+<% } -%>
+
+  echo '# HELP puppet_lab_tcp_check_up Whether a local TCP endpoint accepts connections.'
+  echo '# TYPE puppet_lab_tcp_check_up gauge'
+<% $tcp_checks.each |$name, $check| { -%>
+  if timeout 2 bash -c '</dev/tcp/<%= $check['host'] %>/<%= $check['port'] %>' >/dev/null 2>&1; then
+    echo 'puppet_lab_tcp_check_up{name="<%= $name %>",host="<%= $check['host'] %>",port="<%= $check['port'] %>"} 1'
+  else
+    echo 'puppet_lab_tcp_check_up{name="<%= $name %>",host="<%= $check['host'] %>",port="<%= $check['port'] %>"} 0'
+  fi
+<% } -%>
+
+  echo '# HELP puppet_lab_dns_authoritative_up Whether BIND answers the lab.local SOA authoritatively.'
+  echo '# TYPE puppet_lab_dns_authoritative_up gauge'
+  if dig @127.0.0.1 lab.local SOA +short | grep -q 'ns1.lab.local.'; then
+    echo 'puppet_lab_dns_authoritative_up 1'
+  else
+    echo 'puppet_lab_dns_authoritative_up 0'
+  fi
+
+  echo '# HELP puppet_lab_backup_repository_ok Whether Restic can read the lab backup repository.'
+  echo '# TYPE puppet_lab_backup_repository_ok gauge'
+  if restic -r /var/backups/restic/lab-repo --password-file /etc/restic/lab-password snapshots >/dev/null 2>&1; then
+    echo 'puppet_lab_backup_repository_ok 1'
+  else
+    echo 'puppet_lab_backup_repository_ok 0'
+  fi
+} > "${tmp_file}"
+
+mv "${tmp_file}" "${metrics_file}"

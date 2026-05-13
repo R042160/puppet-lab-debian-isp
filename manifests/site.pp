@@ -10,6 +10,7 @@ node default {
     'isp_dovecot',
     'isp_opendkim',
     'isp_backup',
+    'isp_monitoring',
     'isp_nginx',
   ])
 

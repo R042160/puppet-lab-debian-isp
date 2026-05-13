@@ -1,0 +1,7 @@
+<%- |
+  String[1] $listen_address,
+  String[1] $textfile_directory,
+| -%>
+# Managed by Puppet (module: isp_monitoring). Manual edits will be overwritten.
+
+ARGS="--web.listen-address=<%= $listen_address %> --collector.textfile.directory=<%= $textfile_directory %>"

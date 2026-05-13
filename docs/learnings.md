@@ -343,3 +343,37 @@ Das macht Puppet/Salt zum nächsten logischen Schritt nach „Bash-Skripte mit K
 1. Monitoring mit Prometheus Node Exporter oder Icinga/Checkmk-ähnlichen Checks.
 2. Backup-Retention (`forget --keep-* --prune`) als nächster Schritt.
 3. Optional: signierte Testmail mit `DKIM-Signature` im Maildir prüfen.
+
+## v1.1 – Prometheus Node Exporter + Lab-Health-Metriken (Mai 2026)
+
+### Was geändert wurde
+
+- Neues Modul `isp_monitoring`:
+  - installiert `prometheus-node-exporter`
+  - aktiviert den Textfile Collector
+  - stellt Node Exporter auf `0.0.0.0:9100` bereit
+  - verwaltet `/usr/local/sbin/lab-monitoring-check`
+- Der Lab-Check schreibt eigene Prometheus-Metriken:
+  - `puppet_lab_service_up{service="..."}`
+  - `puppet_lab_tcp_check_up{name="..."}`
+  - `puppet_lab_dns_authoritative_up`
+  - `puppet_lab_backup_repository_ok`
+- `scripts/smoke.sh` prüft jetzt:
+  - Node Exporter läuft.
+  - Port `9100` ist lokal und aus dem Client-Container erreichbar.
+  - Standardmetrik `node_uname_info` wird ausgeliefert.
+  - eigene Lab-Metriken werden über `/metrics` ausgeliefert.
+
+### Was ich dabei gelernt habe
+
+- **Monitoring ist nicht nur ein Dashboard.** Zuerst braucht man saubere Signale: Prozess läuft, Port erreichbar, DNS antwortet, Backup-Repo lesbar.
+- **Node Exporter liefert Host-Metriken.** CPU, Memory, Filesystem und Kernel-Zustand kommen automatisch.
+- **Textfile Collector ist ideal für lokale Health Checks.** Ein Script schreibt Metriken in eine `.prom`-Datei; Node Exporter serviert sie mit.
+- **Smoke-Test und Monitoring ergänzen sich.** Smoke prüft jetzt aktiv. Monitoring liefert dieselben Zustände dauerhaft an einen externen Collector.
+- **Noch fehlt Alerting.** Produktion braucht Prometheus-Regeln, Icinga/Checkmk-Checks oder ein anderes System, das aus Metriken Alarme macht.
+
+### Was als Nächstes kommt (v1.2)
+
+1. Backup-Retention mit `restic forget --keep-* --prune`.
+2. Optional: kleine Prometheus-Regeln als Dokumentation.
+3. Danach Kea DHCP als nächster ISP-Gap.

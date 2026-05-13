@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       procps \
       curl \
       dnsutils \
- && rm -rf /var/lib/apt/lists/* /tmp/puppet-release.deb
+ && rm -f /tmp/puppet-release.deb
 
 ENV PATH="/opt/puppetlabs/bin:${PATH}"
 

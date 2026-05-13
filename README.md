@@ -41,7 +41,7 @@ git clone https://github.com/R042160/puppet-lab-debian-isp.git
 cd puppet-lab-debian-isp
 docker compose up -d
 ./scripts/apply.sh        # läuft puppet apply im Container
-./scripts/smoke.sh        # prüft, dass alle 4 Dienste laufen
+./scripts/smoke.sh        # prüft Dienste + DNS-Antworten mit dig
 ```
 
 ## Unit-Tests
@@ -84,6 +84,7 @@ bundle install
 
 - **Kein puppet master/agent** – `puppet apply` reicht für ein 1-Node-Lab und macht den Loop schnell. Master/Agent kommt im nächsten Schritt.
 - **Kein voller PDK-Workflow** – die Module haben `metadata.json`, `Gemfile.lock` und rspec-puppet Tests, aber `pdk validate`/`pdk test unit` ist der nächste Schritt.
+- **Kein Secondary-DNS/AXFR-Setup** – `allow-transfer` ist vorbereitet, aber ein zweiter BIND-Node kommt als nächster DNS-Schritt.
 - **Kein Forge-Module-Reuse** – Ziel ist *Verstehen, wie es funktioniert*, nicht möglichst wenig Code.
 
 ## Was hier bewusst stimmen muss
@@ -94,7 +95,7 @@ bundle install
 
 ## Lernpfad
 
-*Aktuelle Version: **v0.2** – rspec-puppet Smoke-Tests + Modul-Metadaten eingeführt.*
+*Aktuelle Version: **v0.3** – BIND9 authoritative Zone (`lab.local`) eingeführt.*
 
 - [x] Repo-Struktur + docker-compose
 - [x] `isp_bind` Modul (Package + Service + named.conf.options)
@@ -105,6 +106,8 @@ bundle install
 - [x] **Hiera-Refactor** (Daten aus Manifesten ausgelagert) → `hiera.yaml` + `data/common.yaml`
 - [x] PDK-kompatible Modul-Metadaten (`metadata.json`)
 - [x] rspec-puppet Smoke-Test
+- [x] **BIND9 authoritative Zone** (`lab.local` mit SOA, NS, A, AAAA, MX)
+- [ ] BIND9 Secondary-DNS mit Notify + AXFR
 - [ ] Voller PDK-Workflow (`pdk validate`, `pdk test unit`)
 - [ ] Master/Agent statt apply
 - [ ] Salt-Variante zum Vergleich

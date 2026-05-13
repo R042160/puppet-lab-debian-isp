@@ -1,0 +1,20 @@
+<%- |
+  Hash[String[1], Hash] $zones,
+| -%>
+// Managed by Puppet (module: isp_bind). Manual edits will be overwritten.
+
+<% $zones.each |$zone_name, $zone| { -%>
+zone "<%= $zone_name %>" {
+    type master;
+    file "/etc/bind/zones/db.<%= $zone_name %>";
+<% if $zone['allow_transfer'] and !empty($zone['allow_transfer']) { -%>
+    allow-transfer { <%= $zone['allow_transfer'].join('; ') %>; };
+<% } else { -%>
+    allow-transfer { none; };
+<% } -%>
+<% if $zone['also_notify'] and !empty($zone['also_notify']) { -%>
+    also-notify { <%= $zone['also_notify'].join('; ') %>; };
+<% } -%>
+};
+
+<% } -%>

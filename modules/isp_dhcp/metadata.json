@@ -1,6 +1,6 @@
 {
   "name": "r042160-isp_dhcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": "R042160",
   "summary": "Learning-lab ISC DHCP module for an ISP-style Debian stack.",
   "license": "Apache-2.0",
@@ -23,4 +23,3 @@
     }
   ]
 }
-

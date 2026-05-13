@@ -13,7 +13,15 @@ class isp_dhcp (
   String $range_start,
   String $range_end,
   String $router,
+  Boolean $manage_service,
+  Enum['running', 'stopped'] $service_ensure = 'running',
+  Boolean $service_enable = true,
 ) {
+
+  $dhcp_file_notify = $manage_service ? {
+    true    => Service['isc-dhcp-server'],
+    default => undef,
+  }
 
   package { 'isc-dhcp-server':
     ensure => installed,
@@ -32,15 +40,16 @@ class isp_dhcp (
       'router'      => $router,
     }),
     require => Package['isc-dhcp-server'],
-    notify  => Service['isc-dhcp-server'],
+    notify  => $dhcp_file_notify,
   }
 
-  # Service may fail to start without a real bound interface — that's
-  # expected in a single-container lab. We still declare the resource
-  # so the manifest stays honest about intent.
-  service { 'isc-dhcp-server':
-    ensure  => running,
-    enable  => true,
-    require => [ Package['isc-dhcp-server'], File['/etc/dhcp/dhcpd.conf'] ],
+  # In the Docker lab the service is not managed because no real LAN
+  # interface is bound. A real node can enable service management via Hiera.
+  if $manage_service {
+    service { 'isc-dhcp-server':
+      ensure  => $service_ensure,
+      enable  => $service_enable,
+      require => [ Package['isc-dhcp-server'], File['/etc/dhcp/dhcpd.conf'] ],
+    }
   }
 }

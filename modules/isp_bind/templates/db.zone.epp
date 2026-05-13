@@ -1,0 +1,24 @@
+<%- |
+  String $zone_name,
+  Hash $zone,
+| -%>
+; Managed by Puppet (module: isp_bind). Manual edits will be overwritten.
+; Authoritative zone file for <%= $zone_name %>.
+
+$TTL <%= $zone['ttl'] %>
+@ IN SOA <%= $zone['primary_ns'] %> <%= $zone['admin_email'] %> (
+    <%= $zone['serial'] %> ; serial
+    <%= $zone['refresh'] %> ; refresh
+    <%= $zone['retry'] %> ; retry
+    <%= $zone['expire'] %> ; expire
+    <%= $zone['negative_ttl'] %> ; negative cache TTL
+)
+
+; Records
+<% $zone['records'].each |$record| { -%>
+<% if $record['type'] == 'MX' { -%>
+<%= $record['name'] %> IN MX <%= $record['priority'] %> <%= $record['value'] %>
+<% } else { -%>
+<%= $record['name'] %> IN <%= $record['type'] %> <%= $record['value'] %>
+<% } -%>
+<% } -%>

@@ -12,9 +12,7 @@ describe 'isp_dhcp' do
       .with_content(%r{range 192\.0\.2\.100 192\.0\.2\.200;})
       .with_content(%r{option routers 192\.0\.2\.1;})
       .that_requires('Package[isc-dhcp-server]')
-      .that_notifies('Service[isc-dhcp-server]')
   end
 
-  it { is_expected.to contain_service('isc-dhcp-server').with(ensure: 'running', enable: true) }
+  it { is_expected.not_to contain_service('isc-dhcp-server') }
 end
-

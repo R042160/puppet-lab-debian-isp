@@ -7,13 +7,13 @@ Ehrliche Notizen aus dem Lernprozess. Wird laufend erweitert.
 ### Was gut funktioniert hat
 
 - **`puppet apply` reicht für den Anfang.** Ein Master/Agent-Setup hätte zwei Container und mehr Netzwerk-Komplexität erfordert. Mit `--modulepath` läuft alles aus dem gemounteten `modules/`-Verzeichnis.
-- **Idempotenz prüfen ist trivial:** den zweiten Lauf in `apply.sh` mit erwartetem „0 events"-Output. Wenn beim zweiten Lauf Events auftauchen, ist eine Resource nicht idempotent (häufig: `exec` ohne `unless`/`onlyif`).
+- **Idempotenz prüfen ist trivial:** den zweiten Lauf in `apply.sh` mit erwartetem „0 events"-Output. Wenn beim zweiten Lauf Events auftauchen, ist eine Resource nicht idempotent (häufig: `exec` ohne `unless`/`onlyif`). Ab v0.3 nutzt `apply.sh` `--detailed-exitcodes`, damit Puppet-Fehler nicht still durchrutschen.
 - **Resource relationships** mit `require`/`notify`/`subscribe` machen die Manifeste lesbar wie ein DAG.
 
 ### Wo es geknackt hat
 
 - **Postfix interaktiv:** ohne `debconf-set-selections` blockiert `apt install postfix` mit einer Auswahl-Maske. Lösung: ein `exec` mit `unless`-Guard, der `mailer_type` und `mailname` vorab seedet.
-- **DHCP ohne Interface:** `isc-dhcp-server` startet im Lab-Container nicht sauber, weil keine echte Schnittstelle gebunden ist. Das Manifest deklariert den Service trotzdem – Intent vor Reality.
+- **DHCP ohne Interface:** `isc-dhcp-server` startet im Lab-Container nicht sauber, weil keine echte Schnittstelle gebunden ist. Ab v0.3 wird der Service im Docker-Lab deshalb per Hiera nicht gemanagt; ein echter Node kann `manage_service: true` setzen.
 - **systemd in Docker:** ohne `privileged: true` und `tmpfs:/run` funktioniert `systemctl` nicht innerhalb des Containers. Für ein Lab akzeptabel; Produktion → Vagrant + echte VM.
 
 ### Nächste Schritte
@@ -78,6 +78,35 @@ Das macht Puppet/Salt zum nächsten logischen Schritt nach „Bash-Skripte mit K
 
 ### Was als Nächstes kommt (v0.3)
 
-1. `bundle exec rake spec` als Standard-Testkommando dokumentieren.
-2. `metadata-json-lint modules/*/metadata.json` und `puppet-lint modules/*/manifests/*.pp` in ein Script bündeln.
-3. GitHub Actions für `bundle exec rake spec` einführen.
+1. BIND9 von "installiert" zu "authoritative" erweitern: `named.conf.local` + echte Zone.
+2. DNS-Smoke-Checks mit `dig @127.0.0.1` ergänzen.
+3. Danach Secondary-DNS mit Notify + AXFR vorbereiten.
+
+## v0.3 – BIND9 authoritative Zone (Mai 2026)
+
+### Was geändert wurde
+
+- `isp_bind::zones` in Hiera eingeführt.
+- `modules/isp_bind/templates/named.conf.local.epp` generiert echte BIND-Zone-Blöcke.
+- `modules/isp_bind/templates/db.zone.epp` generiert eine authoritative Zone-Datei.
+- Lab-Zone `lab.local` mit SOA, NS, A, AAAA und MX Records angelegt.
+- `scripts/smoke.sh` prüft DNS jetzt mit `dig @127.0.0.1`.
+- rspec-puppet Tests prüfen `named.conf.local`, `/etc/bind/zones/` und `db.lab.local`.
+- `scripts/apply.sh` nutzt `--detailed-exitcodes`, damit Fehler im Puppet-Run den Script-Exit wirklich rot machen.
+- Dockerfile behält die apt package lists im Image, damit `puppet apply` im Lab Pakete installieren kann.
+- DHCP-Service wird im Docker-Lab per Hiera nicht gemanagt, weil keine echte LAN-Schnittstelle gebunden ist.
+
+### Was ich dabei gelernt habe
+
+- **Authoritative DNS** bedeutet: der Server beantwortet eine Zone, fuer die er selbst die Quelle der Wahrheit ist. Das ist etwas anderes als rekursive Namensauflösung.
+- **SOA ist der Personalausweis einer Zone.** Primary NS, Kontakt, Serial und Timer sagen anderen DNS-Servern, wie diese Zone gepflegt und gecached werden soll.
+- **Trailing dots sind wichtig.** `ns1.lab.local.` ist ein vollständiger DNS-Name. Ohne Punkt wuerde BIND ihn relativ zur Zone interpretieren.
+- **Serial ist Deployment-State.** Wenn sich Zone-Daten ändern, muss die Serial steigen, sonst erkennen Secondaries die Änderung nicht zuverlässig.
+- **AXFR bewusst begrenzen.** `allow-transfer` darf nie pauschal offen sein. Im Lab ist `192.0.2.11` als vorbereiteter Secondary eingetragen.
+- **Validierung darf nicht lügen.** Ohne `--detailed-exitcodes` kann ein Demo-Script grüner aussehen, als der Puppet-Run wirklich war. Der Script-Exit ist Teil der technischen Wahrheit.
+
+### Was als Nächstes kommt (v0.4)
+
+1. Zweiten BIND-Container als Secondary-DNS anlegen.
+2. `also-notify` + `allow-transfer` praktisch testen.
+3. `dig @secondary lab.local SOA` und Serial-Sync validieren.

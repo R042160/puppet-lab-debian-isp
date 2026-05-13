@@ -7,6 +7,41 @@
 
 # ─── isp_bind ──────────────────────────────────────────────────────
 isp_bind::listen_v6: true
+isp_bind::zones:
+  'lab.local':
+    ttl: 300
+    serial: 2026051301
+    primary_ns: 'ns1.lab.local.'
+    admin_email: 'hostmaster.lab.local.'
+    refresh: 3600
+    retry: 900
+    expire: 604800
+    negative_ttl: 300
+    allow_transfer:
+      - '192.0.2.11'
+    records:
+      - name: '@'
+        type: 'NS'
+        value: 'ns1.lab.local.'
+      - name: '@'
+        type: 'MX'
+        priority: 10
+        value: 'mail.lab.local.'
+      - name: 'ns1'
+        type: 'A'
+        value: '192.0.2.10'
+      - name: 'ns1'
+        type: 'AAAA'
+        value: '2001:db8::10'
+      - name: 'www'
+        type: 'A'
+        value: '192.0.2.20'
+      - name: 'mail'
+        type: 'A'
+        value: '192.0.2.25'
+      - name: 'puppet-lab'
+        type: 'A'
+        value: '192.0.2.30'
 
 # ─── isp_dhcp ──────────────────────────────────────────────────────
 # RFC 5737 TEST-NET-1 (documentation-only address space)
@@ -15,6 +50,7 @@ isp_dhcp::netmask:     '255.255.255.0'
 isp_dhcp::range_start: '192.0.2.100'
 isp_dhcp::range_end:   '192.0.2.200'
 isp_dhcp::router:      '192.0.2.1'
+isp_dhcp::manage_service: false
 
 # ─── isp_postfix ───────────────────────────────────────────────────
 isp_postfix::myhostname: 'puppet-lab.local'

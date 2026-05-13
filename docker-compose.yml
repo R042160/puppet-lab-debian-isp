@@ -1,5 +1,6 @@
 services:
   puppet-lab:
+    image: puppet-lab-debian-isp:latest
     build: .
     container_name: puppet-lab
     hostname: puppet-lab.local
@@ -24,6 +25,7 @@ services:
         ipv4_address: 172.28.53.10
 
   puppet-lab-secondary:
+    image: puppet-lab-debian-isp:latest
     build: .
     container_name: puppet-lab-secondary
     hostname: secondary.lab.local
@@ -45,6 +47,15 @@ services:
     networks:
       labnet:
         ipv4_address: 172.28.53.11
+
+  puppet-lab-client:
+    image: puppet-lab-debian-isp:latest
+    build: .
+    container_name: puppet-lab-client
+    hostname: client.lab.local
+    networks:
+      labnet:
+        ipv4_address: 172.28.53.12
 
 networks:
   labnet:

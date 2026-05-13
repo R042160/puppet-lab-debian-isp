@@ -43,6 +43,12 @@ Selbständig durcharbeiten, was die Stellenausschreibung *„System Engineer mit
                  │  │ bind9  │  secondary zone       │
                  │  └────────┘  /var/cache/bind/...  │
                  └───────────────────────────────────┘
+
+                 ┌───────────────────────────────────┐
+                 │ puppet-lab-client                 │
+                 │                                   │
+                 │  unauthorized AXFR must fail      │
+                 └───────────────────────────────────┘
 ```
 
 ## Quickstart
@@ -52,7 +58,7 @@ git clone https://github.com/R042160/puppet-lab-debian-isp.git
 cd puppet-lab-debian-isp
 docker compose up -d
 ./scripts/apply.sh        # läuft puppet apply auf Primary + Secondary
-./scripts/smoke.sh        # prüft Dienste, DNS-Antworten und AXFR
+./scripts/smoke.sh        # prüft Dienste, DNS-Antworten, erlaubtes und verbotenes AXFR
 ```
 
 ## Unit-Tests
@@ -112,7 +118,7 @@ bundle install
 
 ## Lernpfad
 
-*Aktuelle Version: **v0.5** – GitHub-Actions-CI + statischer Lint eingeführt.*
+*Aktuelle Version: **v0.6** – AXFR-Policy mit negativem Test abgesichert.*
 
 - [x] Repo-Struktur + docker-compose
 - [x] `isp_bind` Modul (Package + Service + named.conf.options)
@@ -126,6 +132,7 @@ bundle install
 - [x] **BIND9 authoritative Zone** (`lab.local` mit SOA, NS, A, AAAA, MX)
 - [x] **BIND9 Secondary-DNS** mit Notify + AXFR
 - [x] **GitHub Actions CI** (`bundle exec rake spec`, `scripts/lint.sh`, `docker compose config`)
+- [x] **AXFR-Policy-Test**: Secondary darf transferieren, Client wird abgewiesen
 - [ ] Voller PDK-Workflow (`pdk validate`, `pdk test unit`)
 - [ ] Master/Agent statt apply
 - [ ] Salt-Variante zum Vergleich

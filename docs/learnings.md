@@ -176,3 +176,27 @@ Das macht Puppet/Salt zum nächsten logischen Schritt nach „Bash-Skripte mit K
 1. Optional: GitHub Actions Badge rot/grün nach erstem Run prüfen.
 2. Optional: negativer AXFR-Test von einer nicht erlaubten IP.
 3. Danach: Postfix + Dovecot + DKIM als nächster ISP-Gap.
+
+## v0.6 – AXFR-Policy mit negativem Test (Mai 2026)
+
+### Was geändert wurde
+
+- `docker-compose.yml` enthält jetzt einen dritten Container:
+  - `puppet-lab-client` auf `172.28.53.12`
+  - kein Puppet-Node, kein Secondary, nur ein DNS-Client im Lab-Netz
+- `scripts/smoke.sh` prüft jetzt beide Seiten der Transfer-Policy:
+  - Secondary `172.28.53.11` darf `AXFR` vom Primary ausführen.
+  - Client `172.28.53.12` darf die Zone nicht per `AXFR` ziehen.
+
+### Was ich dabei gelernt habe
+
+- **Ein positiver Test reicht nicht.** Wenn nur geprüft wird, dass der Secondary transferieren darf, weiss man noch nicht, ob andere Clients versehentlich auch dürfen.
+- **Security-Tests brauchen einen Gegenspieler.** Der dritte Container ist kein Feature, sondern ein Test-Actor: er beweist, dass die Policy greift.
+- **AXFR ist sensibel.** Ein offener Zonentransfer verrät die komplette Zone. In einem ISP-Kontext ist das kein Schönheitsfehler, sondern ein echter Betriebsfehler.
+- **Smoke-Tests können Policies prüfen.** Nicht jeder Test muss ein Unit-Test sein. Manche Risiken sieht man besser live im Netzwerk.
+
+### Was als Nächstes kommt (v0.7)
+
+1. Postfix Submission auf Port 587.
+2. Dovecot SASL/Auth für Mail-Login.
+3. Danach DKIM-Signing mit OpenDKIM.

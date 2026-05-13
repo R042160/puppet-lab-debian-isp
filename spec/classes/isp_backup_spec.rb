@@ -47,4 +47,16 @@ describe 'isp_backup' do
       .with_content(%r{named\.conf\.local})
       .that_requires('Exec[init_restic_lab_repository]')
   end
+
+  it do
+    is_expected.to contain_file('/usr/local/sbin/lab-restic-retention')
+      .with(owner: 'root', group: 'root', mode: '0755')
+      .with_content(%r{forget "\$\{forget_args\[@\]\}"})
+      .with_content(%r{--keep-daily 7})
+      .with_content(%r{--keep-weekly 4})
+      .with_content(%r{--keep-monthly 6})
+      .with_content(%r{--keep-yearly 1})
+      .with_content(%r{forget_args\+=\(--prune\)})
+      .that_requires('Exec[init_restic_lab_repository]')
+  end
 end

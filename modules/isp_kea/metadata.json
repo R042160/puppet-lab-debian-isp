@@ -1,0 +1,25 @@
+{
+  "name": "r042160-isp_kea",
+  "version": "0.1.0",
+  "author": "R042160",
+  "summary": "Learning-lab Kea DHCPv4 module for an ISP-style Debian stack.",
+  "license": "Apache-2.0",
+  "source": "https://github.com/R042160/puppet-lab-debian-isp",
+  "project_page": "https://github.com/R042160/puppet-lab-debian-isp",
+  "issues_url": "https://github.com/R042160/puppet-lab-debian-isp/issues",
+  "dependencies": [],
+  "operatingsystem_support": [
+    {
+      "operatingsystem": "Debian",
+      "operatingsystemrelease": [
+        "12"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "name": "puppet",
+      "version_requirement": ">= 8.0.0 < 9.0.0"
+    }
+  ]
+}

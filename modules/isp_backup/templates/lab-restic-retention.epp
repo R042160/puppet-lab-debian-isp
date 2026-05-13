@@ -1,0 +1,35 @@
+<%- |
+  String[1] $repository,
+  String[1] $password_file,
+  Integer[1] $keep_daily,
+  Integer[1] $keep_weekly,
+  Integer[1] $keep_monthly,
+  Integer[1] $keep_yearly,
+  Boolean $prune,
+| -%>
+#!/usr/bin/env bash
+# Managed by Puppet (module: isp_backup). Manual edits will be overwritten.
+set -euo pipefail
+
+repository='<%= $repository %>'
+password_file='<%= $password_file %>'
+host="$(hostname -f 2>/dev/null || hostname)"
+
+forget_args=(
+  --host "${host}"
+  --tag puppet-lab
+  --keep-daily <%= $keep_daily %>
+  --keep-weekly <%= $keep_weekly %>
+  --keep-monthly <%= $keep_monthly %>
+  --keep-yearly <%= $keep_yearly %>
+)
+
+<% if $prune { -%>
+forget_args+=(--prune)
+<% } -%>
+
+restic -r "${repository}" --password-file "${password_file}" \
+  forget "${forget_args[@]}"
+
+restic -r "${repository}" --password-file "${password_file}" \
+  snapshots --host "${host}" --tag puppet-lab >/dev/null

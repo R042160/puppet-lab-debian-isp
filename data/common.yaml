@@ -13,6 +13,7 @@ profile::classes:
   - 'isp_opendkim'
   - 'isp_bind'
   - 'isp_dhcp'
+  - 'isp_kea'
   - 'isp_postfix'
   - 'isp_dovecot'
   - 'isp_backup'
@@ -91,6 +92,17 @@ isp_dhcp::range_end:   '192.0.2.200'
 isp_dhcp::router:      '192.0.2.1'
 isp_dhcp::manage_service: false
 
+# ─── isp_kea ───────────────────────────────────────────────────────
+isp_kea::subnet_cidr:     '192.0.2.0/24'
+isp_kea::range_start:     '192.0.2.100'
+isp_kea::range_end:       '192.0.2.200'
+isp_kea::router:          '192.0.2.1'
+isp_kea::dns_servers:
+  - '9.9.9.9'
+  - '1.1.1.1'
+isp_kea::domain_name:     'lab.local'
+isp_kea::manage_service:  false
+
 # ─── isp_postfix ───────────────────────────────────────────────────
 isp_postfix::myhostname: 'puppet-lab.local'
 isp_postfix::mydomain:   'lab.local'
@@ -125,6 +137,11 @@ isp_backup::backup_paths:
   - '/etc/dovecot'
   - '/etc/opendkim'
   - '/lab/data'
+isp_backup::keep_daily:   7
+isp_backup::keep_weekly:  4
+isp_backup::keep_monthly: 6
+isp_backup::keep_yearly:  1
+isp_backup::prune:        true
 
 # ─── isp_monitoring ────────────────────────────────────────────────
 isp_monitoring::listen_address: '0.0.0.0:9100'

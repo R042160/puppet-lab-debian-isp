@@ -112,6 +112,7 @@ echo "==> Primary service status (inside ${PRIMARY_CONTAINER})"
 CONTAINER="${PRIMARY_CONTAINER}"
 check "named    running"          bash -c "pgrep -x named >/dev/null"
 check "isc-dhcp present (config)" bash -c "[ -f /etc/dhcp/dhcpd.conf ]"
+check "kea dhcp4 present (config)" bash -c "[ -f /etc/kea/kea-dhcp4.conf ]"
 check "postfix  running"          bash -c "pgrep -x master >/dev/null"
 check "dovecot  running"          bash -c "pgrep -x dovecot >/dev/null"
 check "opendkim running"          bash -c "pgrep -x opendkim >/dev/null"
@@ -143,8 +144,16 @@ echo
 echo "==> Backup and restore"
 check_in "${PRIMARY_CONTAINER}" "restic repository initialized" bash -c "restic -r /var/backups/restic/lab-repo --password-file /etc/restic/lab-password snapshots >/dev/null"
 check_in "${PRIMARY_CONTAINER}" "restic backup creates snapshot" bash -c "/usr/local/sbin/lab-restic-backup"
+check_in "${PRIMARY_CONTAINER}" "restic retention forget/prune passes" bash -c "/usr/local/sbin/lab-restic-retention"
 check_in "${PRIMARY_CONTAINER}" "restic restore-check passes" bash -c "/usr/local/sbin/lab-restic-restore-check"
 check_in "${PRIMARY_CONTAINER}" "restic repository integrity" bash -c "restic -r /var/backups/restic/lab-repo --password-file /etc/restic/lab-password check"
+
+echo
+echo "==> Kea DHCP configuration"
+check_in "${PRIMARY_CONTAINER}" "kea dhcp4 config exists" bash -c "[ -f /etc/kea/kea-dhcp4.conf ]"
+check_in "${PRIMARY_CONTAINER}" "kea dhcp4 config validates" bash -c "kea-dhcp4 -t /etc/kea/kea-dhcp4.conf"
+check_in "${PRIMARY_CONTAINER}" "kea dhcp4 lab subnet configured" bash -c "grep -q '192.0.2.0/24' /etc/kea/kea-dhcp4.conf"
+check_in "${PRIMARY_CONTAINER}" "kea dhcp4 pool configured" bash -c "grep -q '192.0.2.100 - 192.0.2.200' /etc/kea/kea-dhcp4.conf"
 
 echo
 echo "==> Monitoring metrics"

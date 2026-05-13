@@ -8,6 +8,11 @@ class isp_backup (
   String[1] $password_file,
   String[1] $password,
   Array[String[1]] $backup_paths,
+  Integer[1] $keep_daily = 7,
+  Integer[1] $keep_weekly = 4,
+  Integer[1] $keep_monthly = 6,
+  Integer[1] $keep_yearly = 1,
+  Boolean $prune = true,
 ) {
 
   package { 'restic':
@@ -78,6 +83,23 @@ class isp_backup (
     content => epp('isp_backup/lab-restic-restore-check.epp', {
       'repository'    => $repository,
       'password_file' => $password_file,
+    }),
+    require => Exec['init_restic_lab_repository'],
+  }
+
+  file { '/usr/local/sbin/lab-restic-retention':
+    ensure  => file,
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0755',
+    content => epp('isp_backup/lab-restic-retention.epp', {
+      'repository'    => $repository,
+      'password_file' => $password_file,
+      'keep_daily'    => $keep_daily,
+      'keep_weekly'   => $keep_weekly,
+      'keep_monthly'  => $keep_monthly,
+      'keep_yearly'   => $keep_yearly,
+      'prune'         => $prune,
     }),
     require => Exec['init_restic_lab_repository'],
   }

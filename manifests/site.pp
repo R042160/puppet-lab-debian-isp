@@ -6,6 +6,7 @@ node default {
   $profile_classes = lookup('profile::classes', Array[String[1]], 'first', [
     'isp_bind',
     'isp_dhcp',
+    'isp_kea',
     'isp_postfix',
     'isp_dovecot',
     'isp_opendkim',

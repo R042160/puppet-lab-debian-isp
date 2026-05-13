@@ -377,3 +377,41 @@ Das macht Puppet/Salt zum nächsten logischen Schritt nach „Bash-Skripte mit K
 1. Backup-Retention mit `restic forget --keep-* --prune`.
 2. Optional: kleine Prometheus-Regeln als Dokumentation.
 3. Danach Kea DHCP als nächster ISP-Gap.
+
+## v1.2 - Kea DHCPv4 + Restic Retention (Mai 2026)
+
+### Was geändert wurde
+
+- Neues Modul `isp_kea`:
+  - installiert `kea-dhcp4-server`
+  - verwaltet `/etc/kea/kea-dhcp4.conf`
+  - validiert die Konfiguration mit `kea-dhcp4 -t`
+  - startet den Dienst im Container-Lab standardmässig nicht automatisch
+- `isp_backup` verwaltet zusätzlich `/usr/local/sbin/lab-restic-retention`.
+- Die Retention nutzt `restic forget` mit:
+  - `--keep-daily`
+  - `--keep-weekly`
+  - `--keep-monthly`
+  - `--keep-yearly`
+  - optionalem `--prune`
+- `scripts/smoke.sh` prüft jetzt:
+  - ein Backup-Snapshot kann erzeugt werden
+  - Retention/Prune läuft
+  - Restore-Check läuft
+  - Kea-Konfiguration existiert
+  - `kea-dhcp4 -t /etc/kea/kea-dhcp4.conf` ist erfolgreich
+  - Subnet und Pool entsprechen den Hiera-Daten
+
+### Was ich dabei gelernt habe
+
+- **Kea ist konfigurativ viel näher an modernem ISP-DHCP als ein Toy-Setup.** Der wichtige Beweis im Container ist nicht ein laufender DHCP-Dienst auf dem Host-Netz, sondern eine validierte, reproduzierbare DHCPv4-Konfiguration.
+- **DHCP im Container braucht Zurückhaltung.** Ein echter DHCP-Server kann störend sein, wenn er auf falschen Interfaces sendet. Darum bleibt `manage_service` im Lab aus und der Smoke-Test prüft die Konfiguration statt Live-Leases.
+- **Backup-Retention ist Teil des Backups, nicht Luxus.** Ohne `forget --keep-* --prune` wächst ein Repository unkontrolliert und beweist noch keine Betriebsdisziplin.
+- **Retention muss nach echtem Snapshot geprüft werden.** Der Smoke-Test erzeugt zuerst ein Backup, danach wird Retention ausgeführt und danach bleibt der Restore-Check Pflicht.
+- **Damit sind zwei Init7-Gaps deutlich stärker geschlossen.** Das Lab zeigt jetzt moderne DHCP-Konfiguration und Backup-Lifecycle statt nur Snapshot/Restore.
+
+### Was als Nächstes kommt (v1.3)
+
+1. Prometheus-Alert-Regeln oder Icinga/Checkmk-ähnliche Check-Dokumentation.
+2. Optional: Bareos als Enterprise-Backup-Kontrast zu Restic.
+3. Danach BGP/OSPF-Fundamentals als Netzwerk-Gap.

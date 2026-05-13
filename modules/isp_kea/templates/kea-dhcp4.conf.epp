@@ -1,0 +1,53 @@
+<%- |
+  String[1] $subnet_cidr,
+  String[1] $range_start,
+  String[1] $range_end,
+  String[1] $router,
+  Array[String[1]] $dns_servers,
+  String[1] $domain_name,
+| -%>
+{
+  "Dhcp4": {
+    "interfaces-config": {
+      "interfaces": [ "*" ]
+    },
+    "valid-lifetime": 600,
+    "renew-timer": 300,
+    "rebind-timer": 500,
+    "authoritative": true,
+    "subnet4": [
+      {
+        "id": 1,
+        "subnet": "<%= $subnet_cidr %>",
+        "pools": [
+          { "pool": "<%= $range_start %> - <%= $range_end %>" }
+        ],
+        "option-data": [
+          {
+            "name": "routers",
+            "data": "<%= $router %>"
+          },
+          {
+            "name": "domain-name-servers",
+            "data": "<%= $dns_servers.join(', ') %>"
+          },
+          {
+            "name": "domain-name",
+            "data": "<%= $domain_name %>"
+          }
+        ]
+      }
+    ],
+    "loggers": [
+      {
+        "name": "kea-dhcp4",
+        "output_options": [
+          {
+            "output": "stdout"
+          }
+        ],
+        "severity": "INFO"
+      }
+    ]
+  }
+}

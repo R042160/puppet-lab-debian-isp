@@ -15,9 +15,10 @@ Selbständig durcharbeiten, was die Stellenausschreibung *„System Engineer mit
 
 - **BIND9** – authoritative DNS, IPv4/IPv6
 - **ISC-DHCP-Server** – LAN-Lease-Pool
+- **Kea DHCPv4** – moderner DHCPv4-Server mit Lab-Konfiguration
 - **Postfix + Dovecot** – Submission 587, SMTP AUTH, SASL-Socket, Maildir/IMAP
 - **OpenDKIM** – DKIM-Signing mit lokal generierter Lab-Key
-- **Restic** – lokales Config-Backup mit Restore-Check
+- **Restic** – lokales Config-Backup mit Restore-Check und Retention
 - **Prometheus Node Exporter** – Host-Metriken + Lab-Health-Metriken
 - **Nginx** – Default-Vhost + TLS-Vorbereitung
 
@@ -28,7 +29,7 @@ Selbständig durcharbeiten, was die Stellenausschreibung *„System Engineer mit
                  │ puppet-lab (Primary DNS + Dienste)│
                  │                                   │
    docker-compose│  ┌────────┐ ┌────────┐ ┌────────┐│
-   ───────────▶  │  │ bind9  │ │  dhcp  │ │postfix ││
+   ───────────▶  │  │ bind9  │ │ dhcp4  │ │postfix ││
                  │  └────────┘ └────────┘ └────────┘│
                  │  ┌────────┐ ┌────────┐ ┌────────┐│
                  │  │dovecot │ │opendkim│ │ nginx  ││
@@ -67,7 +68,7 @@ git clone https://github.com/R042160/puppet-lab-debian-isp.git
 cd puppet-lab-debian-isp
 docker compose up -d
 ./scripts/apply.sh        # läuft puppet apply auf Primary + Secondary
-./scripts/smoke.sh        # prüft Dienste, SMTP AUTH, DKIM/SPF/DMARC, Backup/Restore, Monitoring, DNS und AXFR
+./scripts/smoke.sh        # prüft Dienste, SMTP AUTH, DKIM/SPF/DMARC, Backup/Retention/Restore, Kea, Monitoring, DNS und AXFR
 ```
 
 ## Unit-Tests
@@ -99,6 +100,7 @@ bundle install
 │   ├── isp_bind/          # BIND9 authoritative
 │   ├── isp_backup/        # Restic repository + backup/restore-check scripts
 │   ├── isp_dhcp/          # ISC-DHCP-Server
+│   ├── isp_kea/           # Kea DHCPv4
 │   ├── isp_dovecot/       # Dovecot IMAP + SASL auth socket
 │   ├── isp_monitoring/    # Prometheus Node Exporter + textfile metrics
 │   ├── isp_opendkim/      # OpenDKIM signing + local key generation
@@ -121,7 +123,7 @@ bundle install
 - **Kein puppet master/agent** – `puppet apply` reicht für ein 1-Node-Lab und macht den Loop schnell. Master/Agent kommt im nächsten Schritt.
 - **Kein voller PDK-Workflow** – die Module haben `metadata.json`, `Gemfile.lock` und rspec-puppet Tests, aber `pdk validate`/`pdk test unit` ist der nächste Schritt.
 - **Kein echter Multi-Host-Cluster** – Primary/Secondary laufen als Docker-Container in einem Lab-Netz. Für Produktion wäre das auf getrennten Hosts/VMs.
-- **Kein Offsite-Backup** – Restic läuft lokal im Lab, mit Restore-Check. Produktion braucht zusätzlich Remote-Repository, Retention und Monitoring.
+- **Kein Offsite-Backup** – Restic läuft lokal im Lab, mit Restore-Check und Retention. Produktion braucht zusätzlich Remote-Repository.
 - **Kein komplettes Monitoring-System** – Node Exporter liefert Metriken; Prometheus/Icinga/Checkmk als externer Collector ist der nächste Schritt.
 - **Kein produktionsreifes Mail-TLS** – SMTP AUTH läuft im Lab ohne TLS, damit zuerst Postfix/Dovecot-SASL verstanden und getestet wird.
 - **Keine DKIM-Private-Key im Repo** – OpenDKIM generiert die Lab-Key lokal im Container; BIND bindet nur den öffentlichen `.txt`-Record ein.
@@ -135,12 +137,13 @@ bundle install
 
 ## Lernpfad
 
-*Aktuelle Version: **v1.1** – Prometheus Node Exporter + Lab-Health-Metriken eingeführt.*
+*Aktuelle Version: **v1.2** – Kea DHCPv4 + Restic Retention eingeführt.*
 
 - [x] Repo-Struktur + docker-compose
 - [x] `isp_bind` Modul (Package + Service + named.conf.options)
 - [x] `isp_backup` Modul (Restic Repo + Backup/Restore-Check)
 - [x] `isp_dhcp` Modul (Package + Service + dhcpd.conf)
+- [x] `isp_kea` Modul (Kea DHCPv4 Package + kea-dhcp4.conf + Syntax-Check)
 - [x] `isp_postfix` Modul (Package + Service + main.cf)
 - [x] `isp_dovecot` Modul (Package + Service + Maildir/SASL)
 - [x] `isp_monitoring` Modul (Node Exporter + Textfile Collector)
@@ -158,7 +161,9 @@ bundle install
 - [x] **SMTP AUTH Smoke-Test**: Lab-User authentifiziert via Postfix Submission
 - [x] **Mail Signing**: OpenDKIM-Milter + DKIM/SPF/DMARC Records in `lab.local`
 - [x] **Backup/Restore**: Restic Snapshot + Restore-Check im Smoke-Test
+- [x] **Backup-Retention**: `restic forget --keep-* --prune` im Smoke-Test
 - [x] **Monitoring**: Node Exporter + eigene Lab-Health-Metriken
+- [x] **Kea DHCPv4**: moderner DHCPv4-Server mit gerenderter Lab-Subnet-Konfiguration
 - [ ] Voller PDK-Workflow (`pdk validate`, `pdk test unit`)
 - [ ] Master/Agent statt apply
 - [ ] Salt-Variante zum Vergleich

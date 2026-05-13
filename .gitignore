@@ -1,0 +1,8 @@
+# Local lab state
+*.log
+*.tmp
+.DS_Store
+__pycache__/
+
+# Docker
+.docker-data/

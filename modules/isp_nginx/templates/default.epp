@@ -1,0 +1,18 @@
+<%- |
+  String $server_name,
+| -%>
+# Managed by Puppet (module: isp_nginx). Manual edits will be overwritten.
+
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    root /var/www/html;
+    index index.html;
+
+    server_name <%= $server_name %>;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}

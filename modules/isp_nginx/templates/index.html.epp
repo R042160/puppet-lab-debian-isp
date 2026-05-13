@@ -1,0 +1,21 @@
+<%- |
+  String $server_name,
+| -%>
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>puppet-lab</title>
+<style>
+  body { font-family: -apple-system, "Segoe UI", sans-serif; padding: 3rem; max-width: 38rem; margin: auto; color: #1a1a1a; }
+  h1 { color: #1e3a5f; }
+  code { background: #f3f4f6; padding: 0.1rem 0.4rem; border-radius: 3px; }
+</style>
+</head>
+<body>
+<h1>puppet-lab</h1>
+<p>Diese Seite wird von Nginx ausgeliefert und vollständig von Puppet verwaltet (Modul <code>isp_nginx</code>).</p>
+<p>Host: <code><%= $server_name %></code></p>
+<p>Ein <code>puppet apply</code> hat: Paket installiert, Default-Vhost geschrieben, Service gestartet — alles idempotent.</p>
+</body>
+</html>

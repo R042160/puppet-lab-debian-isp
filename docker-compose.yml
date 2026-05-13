@@ -1,0 +1,19 @@
+services:
+  puppet-lab:
+    build: .
+    container_name: puppet-lab
+    hostname: puppet-lab.local
+    privileged: true        # required for systemd inside container
+    cap_add:
+      - SYS_ADMIN
+    volumes:
+      - ./manifests:/lab/manifests:ro
+      - ./modules:/lab/modules:ro
+      - ./scripts:/lab/scripts:ro
+    tmpfs:
+      - /run
+      - /run/lock
+    ports:
+      - "5380:53/udp"       # bind9
+      - "5380:53/tcp"
+      - "8080:80"           # nginx

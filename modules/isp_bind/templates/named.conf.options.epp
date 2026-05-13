@@ -1,0 +1,21 @@
+<%- |
+  Boolean $listen_v6,
+| -%>
+// Managed by Puppet (module: isp_bind). Manual edits will be overwritten.
+
+options {
+    directory "/var/cache/bind";
+
+    recursion no;
+    allow-query { any; };
+
+    listen-on    { any; };
+<% if $listen_v6 { -%>
+    listen-on-v6 { any; };
+<% } else { -%>
+    listen-on-v6 { none; };
+<% } -%>
+
+    dnssec-validation auto;
+    auth-nxdomain no;
+};

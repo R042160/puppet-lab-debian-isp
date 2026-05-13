@@ -11,13 +11,16 @@ class isp_postfix (
   String $mydomain,
 ) {
 
+  $preseed_mailer_type = "/bin/echo 'postfix postfix/main_mailer_type select Local only' | /usr/bin/debconf-set-selections"
+  $preseed_mailname    = "/bin/echo \"postfix postfix/mailname string ${myhostname}\" | /usr/bin/debconf-set-selections"
+
   # debconf preseeding so postfix install is fully non-interactive
   package { 'debconf-utils':
     ensure => installed,
   }
 
   exec { 'preseed_postfix':
-    command => "/bin/echo 'postfix postfix/main_mailer_type select Local only' | /usr/bin/debconf-set-selections && /bin/echo \"postfix postfix/mailname string ${myhostname}\" | /usr/bin/debconf-set-selections",
+    command => "${preseed_mailer_type} && ${preseed_mailname}",
     unless  => '/usr/bin/debconf-show postfix 2>/dev/null | /bin/grep -q "Local only"',
     require => Package['debconf-utils'],
     before  => Package['postfix'],

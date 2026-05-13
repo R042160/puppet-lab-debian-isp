@@ -58,3 +58,26 @@ Das macht Puppet/Salt zum nächsten logischen Schritt nach „Bash-Skripte mit K
 2. **rspec-puppet** Smoke-Test pro Modul ("class compiles", "Package present").
 3. **`puppet-lint` + `metadata-json-lint`** in einer GitHub-Actions-CI.
 4. **Per-OS-Hiera-Ebene** (`%{facts.os.distro.codename}.yaml`) zur Vorbereitung auf Multi-Distro-Support (Bookworm vs. Trixie).
+
+## v0.2 – rspec-puppet Smoke-Tests + Modul-Metadaten (Mai 2026)
+
+### Was geändert wurde
+
+- Neues Ruby-Test-Scaffolding im Repo-Root:
+  - `Gemfile` + `Gemfile.lock` mit Puppet 8, rspec-puppet, puppet-lint und metadata-json-lint.
+  - `.rspec`, `Rakefile`, `spec/spec_helper.rb`.
+  - `spec/classes/*_spec.rb` mit einem Smoke-Test pro Modul.
+- Jedes Modul hat jetzt ein eigenes `metadata.json` mit Puppet-8-Requirement und Debian-12-Support.
+- `scripts/spec.sh` startet die Unit-Tests über Bundler.
+
+### Was ich dabei gelernt habe
+
+- **rspec-puppet testet den Catalog, nicht den laufenden Server.** Das ist wie ein Bauplan-Check: Puppet kompiliert, ob die erwarteten Resources existieren, bevor irgendein Paket wirklich installiert wird.
+- **Compile-Test ist der erste Sicherheitsgurt.** Wenn Hiera-Daten fehlen, EPP-Templates kaputt sind oder Resource-Abhängigkeiten unauflösbar werden, schlägt der Test früh fehl.
+- **Content-Matcher prüfen Hiera indirekt.** Wenn der Nginx-Test `puppet-lab.local` im generierten File erwartet, beweist er, dass Hiera → Class Parameter → EPP Template zusammenarbeitet.
+
+### Was als Nächstes kommt (v0.3)
+
+1. `bundle exec rake spec` als Standard-Testkommando dokumentieren.
+2. `metadata-json-lint modules/*/metadata.json` und `puppet-lint modules/*/manifests/*.pp` in ein Script bündeln.
+3. GitHub Actions für `bundle exec rake spec` einführen.

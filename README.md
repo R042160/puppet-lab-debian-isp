@@ -44,12 +44,24 @@ docker compose up -d
 ./scripts/smoke.sh        # prüft, dass alle 4 Dienste laufen
 ```
 
+## Unit-Tests
+
+```bash
+bundle install
+./scripts/spec.sh         # rspec-puppet: Catalog compiles + Resources existieren
+```
+
 ## Struktur
 
 ```
 .
+├── Gemfile
+├── Gemfile.lock
 ├── docker-compose.yml
 ├── Dockerfile
+├── data/
+│   └── common.yaml         # Hiera-Daten fuer Lab-Defaults
+├── hiera.yaml              # Hiera-v5-Hierarchie
 ├── manifests/
 │   └── site.pp            # entrypoint, klassifiziert den Node
 ├── modules/
@@ -57,8 +69,12 @@ docker compose up -d
 │   ├── isp_dhcp/          # ISC-DHCP-Server
 │   ├── isp_postfix/       # Postfix MTA
 │   └── isp_nginx/         # Nginx default vhost
+├── spec/
+│   ├── spec_helper.rb
+│   └── classes/           # rspec-puppet Smoke-Tests
 ├── scripts/
 │   ├── apply.sh
+│   ├── spec.sh
 │   └── smoke.sh
 └── docs/
     └── learnings.md       # ehrliche Notizen aus dem Lernprozess
@@ -67,8 +83,7 @@ docker compose up -d
 ## Was ich bewusst (noch) nicht mache
 
 - **Kein puppet master/agent** – `puppet apply` reicht für ein 1-Node-Lab und macht den Loop schnell. Master/Agent kommt im nächsten Schritt.
-- **Kein Hiera** – Daten sind aktuell in den Manifesten. Hiera-Separation ist ein Refactor-Ziel, sobald die Module sauber laufen.
-- **Keine PDK-Tests** – kommt, sobald die Module stabil sind.
+- **Kein voller PDK-Workflow** – die Module haben `metadata.json`, `Gemfile.lock` und rspec-puppet Tests, aber `pdk validate`/`pdk test unit` ist der nächste Schritt.
 - **Kein Forge-Module-Reuse** – Ziel ist *Verstehen, wie es funktioniert*, nicht möglichst wenig Code.
 
 ## Was hier bewusst stimmen muss
@@ -79,7 +94,7 @@ docker compose up -d
 
 ## Lernpfad
 
-*Aktuelle Version: **v0.1** – Hiera-Layer eingeführt, Daten aus Manifesten ausgelagert.*
+*Aktuelle Version: **v0.2** – rspec-puppet Smoke-Tests + Modul-Metadaten eingeführt.*
 
 - [x] Repo-Struktur + docker-compose
 - [x] `isp_bind` Modul (Package + Service + named.conf.options)
@@ -88,8 +103,9 @@ docker compose up -d
 - [x] `isp_nginx` Modul (Package + Service + default-site)
 - [x] `scripts/apply.sh` + `scripts/smoke.sh`
 - [x] **Hiera-Refactor** (Daten aus Manifesten ausgelagert) → `hiera.yaml` + `data/common.yaml`
-- [ ] PDK-Init für jedes Modul (`pdk new module`)
-- [ ] rspec-puppet Smoke-Test
+- [x] PDK-kompatible Modul-Metadaten (`metadata.json`)
+- [x] rspec-puppet Smoke-Test
+- [ ] Voller PDK-Workflow (`pdk validate`, `pdk test unit`)
 - [ ] Master/Agent statt apply
 - [ ] Salt-Variante zum Vergleich
 

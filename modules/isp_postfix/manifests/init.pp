@@ -10,6 +10,8 @@ class isp_postfix (
   String $myhostname,
   String $mydomain,
   Boolean $submission_enabled = true,
+  Boolean $dkim_milter_enabled = false,
+  String[1] $dkim_milter_socket = 'inet:127.0.0.1:8891',
 ) {
 
   $preseed_mailer_type = "/bin/echo 'postfix postfix/main_mailer_type select Local only' | /usr/bin/debconf-set-selections"
@@ -37,9 +39,11 @@ class isp_postfix (
     group   => 'root',
     mode    => '0644',
     content => epp('isp_postfix/main.cf.epp', {
-      'myhostname'         => $myhostname,
-      'mydomain'           => $mydomain,
-      'submission_enabled' => $submission_enabled,
+      'myhostname'          => $myhostname,
+      'mydomain'            => $mydomain,
+      'submission_enabled'  => $submission_enabled,
+      'dkim_milter_enabled' => $dkim_milter_enabled,
+      'dkim_milter_socket'  => $dkim_milter_socket,
     }),
     require => Package['postfix'],
     notify  => Service['postfix'],

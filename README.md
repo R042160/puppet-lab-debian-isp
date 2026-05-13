@@ -16,6 +16,7 @@ Selbständig durcharbeiten, was die Stellenausschreibung *„System Engineer mit
 - **BIND9** – authoritative DNS, IPv4/IPv6
 - **ISC-DHCP-Server** – LAN-Lease-Pool
 - **Postfix + Dovecot** – Submission 587, SMTP AUTH, SASL-Socket, Maildir/IMAP
+- **OpenDKIM** – DKIM-Signing mit lokal generierter Lab-Key
 - **Nginx** – Default-Vhost + TLS-Vorbereitung
 
 ## Lab-Aufbau
@@ -27,9 +28,9 @@ Selbständig durcharbeiten, was die Stellenausschreibung *„System Engineer mit
    docker-compose│  ┌────────┐ ┌────────┐ ┌────────┐│
    ───────────▶  │  │ bind9  │ │  dhcp  │ │postfix ││
                  │  └────────┘ └────────┘ └────────┘│
-                 │  ┌────────┐ ┌────────┐           │
-                 │  │dovecot │ │ nginx  │           │
-                 │  └────────┘ └────────┘           │
+                 │  ┌────────┐ ┌────────┐ ┌────────┐│
+                 │  │dovecot │ │opendkim│ │ nginx  ││
+                 │  └────────┘ └────────┘ └────────┘│
                  │                                   │
                  │  puppet apply manifests/site.pp   │
                  └───────────────────────────────────┘
@@ -58,7 +59,7 @@ git clone https://github.com/R042160/puppet-lab-debian-isp.git
 cd puppet-lab-debian-isp
 docker compose up -d
 ./scripts/apply.sh        # läuft puppet apply auf Primary + Secondary
-./scripts/smoke.sh        # prüft Dienste, SMTP AUTH, DNS und AXFR-Policy
+./scripts/smoke.sh        # prüft Dienste, SMTP AUTH, DKIM/SPF/DMARC, DNS und AXFR
 ```
 
 ## Unit-Tests
@@ -90,6 +91,7 @@ bundle install
 │   ├── isp_bind/          # BIND9 authoritative
 │   ├── isp_dhcp/          # ISC-DHCP-Server
 │   ├── isp_dovecot/       # Dovecot IMAP + SASL auth socket
+│   ├── isp_opendkim/      # OpenDKIM signing + local key generation
 │   ├── isp_postfix/       # Postfix MTA
 │   └── isp_nginx/         # Nginx default vhost
 ├── spec/
@@ -110,6 +112,7 @@ bundle install
 - **Kein voller PDK-Workflow** – die Module haben `metadata.json`, `Gemfile.lock` und rspec-puppet Tests, aber `pdk validate`/`pdk test unit` ist der nächste Schritt.
 - **Kein echter Multi-Host-Cluster** – Primary/Secondary laufen als Docker-Container in einem Lab-Netz. Für Produktion wäre das auf getrennten Hosts/VMs.
 - **Kein produktionsreifes Mail-TLS** – SMTP AUTH läuft im Lab ohne TLS, damit zuerst Postfix/Dovecot-SASL verstanden und getestet wird.
+- **Keine DKIM-Private-Key im Repo** – OpenDKIM generiert die Lab-Key lokal im Container; BIND bindet nur den öffentlichen `.txt`-Record ein.
 - **Kein Forge-Module-Reuse** – Ziel ist *Verstehen, wie es funktioniert*, nicht möglichst wenig Code.
 
 ## Was hier bewusst stimmen muss
@@ -120,13 +123,14 @@ bundle install
 
 ## Lernpfad
 
-*Aktuelle Version: **v0.8** – SMTP AUTH mit Dovecot passwd-file Smoke-Test eingeführt.*
+*Aktuelle Version: **v0.9** – OpenDKIM + DKIM/SPF/DMARC DNS-Records eingeführt.*
 
 - [x] Repo-Struktur + docker-compose
 - [x] `isp_bind` Modul (Package + Service + named.conf.options)
 - [x] `isp_dhcp` Modul (Package + Service + dhcpd.conf)
 - [x] `isp_postfix` Modul (Package + Service + main.cf)
 - [x] `isp_dovecot` Modul (Package + Service + Maildir/SASL)
+- [x] `isp_opendkim` Modul (Signing-Key, KeyTable, SigningTable, TrustedHosts)
 - [x] `isp_nginx` Modul (Package + Service + default-site)
 - [x] `scripts/apply.sh` + `scripts/smoke.sh`
 - [x] **Hiera-Refactor** (Daten aus Manifesten ausgelagert) → `hiera.yaml` + `data/common.yaml`
@@ -138,6 +142,7 @@ bundle install
 - [x] **AXFR-Policy-Test**: Secondary darf transferieren, Client wird abgewiesen
 - [x] **Mail Submission**: Postfix 587 + Dovecot SASL-Socket + Maildir
 - [x] **SMTP AUTH Smoke-Test**: Lab-User authentifiziert via Postfix Submission
+- [x] **Mail Signing**: OpenDKIM-Milter + DKIM/SPF/DMARC Records in `lab.local`
 - [ ] Voller PDK-Workflow (`pdk validate`, `pdk test unit`)
 - [ ] Master/Agent statt apply
 - [ ] Salt-Variante zum Vergleich

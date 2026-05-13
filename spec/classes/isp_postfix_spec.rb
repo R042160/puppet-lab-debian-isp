@@ -19,6 +19,9 @@ describe 'isp_postfix' do
       .with_content(%r{mydomain   = lab\.local})
       .with_content(%r{home_mailbox = Maildir/})
       .with_content(%r{smtpd_sasl_type = dovecot})
+      .with_content(%r{milter_protocol = 6})
+      .with_content(%r{smtpd_milters = inet:127\.0\.0\.1:8891})
+      .with_content(%r{non_smtpd_milters = inet:127\.0\.0\.1:8891})
       .that_requires('Package[postfix]')
       .that_notifies('Service[postfix]')
   end

@@ -114,6 +114,7 @@ check "named    running"          bash -c "pgrep -x named >/dev/null"
 check "isc-dhcp present (config)" bash -c "[ -f /etc/dhcp/dhcpd.conf ]"
 check "postfix  running"          bash -c "pgrep -x master >/dev/null"
 check "dovecot  running"          bash -c "pgrep -x dovecot >/dev/null"
+check "opendkim running"          bash -c "pgrep -x opendkim >/dev/null"
 check "nginx    running"          bash -c "pgrep -x nginx  >/dev/null"
 
 echo
@@ -128,6 +129,14 @@ check_in "${PRIMARY_CONTAINER}" "dovecot auth socket for postfix" bash -c "[ -S 
 check_in "${PRIMARY_CONTAINER}" "dovecot Maildir config active" bash -c "doveconf -n | grep -q '^mail_location = maildir:~/Maildir'"
 check_in "${PRIMARY_CONTAINER}" "dovecot passwd-file auth works" bash -c "doveadm auth test '${LAB_MAIL_USER}' '${LAB_MAIL_PASSWORD}'"
 check_smtp_auth_in "${CLIENT_CONTAINER}" "SMTP AUTH succeeds via submission"
+
+echo
+echo "==> OpenDKIM signing path and DNS records"
+check_in "${PRIMARY_CONTAINER}" "opendkim milter listens on 8891" bash -c "timeout 2 bash -c '</dev/tcp/127.0.0.1/8891'"
+check_in "${PRIMARY_CONTAINER}" "postfix uses opendkim milter" bash -c "postconf -h smtpd_milters | grep -qx 'inet:127.0.0.1:8891'"
+check_in "${PRIMARY_CONTAINER}" "DKIM public key served by BIND" bash -c "dig @127.0.0.1 default._domainkey.lab.local TXT +short | grep -q 'v=DKIM1'"
+check_in "${PRIMARY_CONTAINER}" "SPF record served by BIND" bash -c "dig @127.0.0.1 lab.local TXT +short | grep -q 'v=spf1 mx -all'"
+check_in "${PRIMARY_CONTAINER}" "DMARC record served by BIND" bash -c "dig @127.0.0.1 _dmarc.lab.local TXT +short | grep -q 'v=DMARC1; p=none'"
 
 echo
 echo "==> Primary BIND9 authoritative answers"

@@ -2,6 +2,8 @@
   String $myhostname,
   String $mydomain,
   Boolean $submission_enabled,
+  Boolean $dkim_milter_enabled,
+  String[1] $dkim_milter_socket,
 | -%>
 # Managed by Puppet (module: isp_postfix). Manual edits will be overwritten.
 
@@ -29,4 +31,11 @@ smtpd_sasl_path = private/auth
 smtpd_sasl_auth_enable = yes
 smtpd_tls_auth_only = no
 smtpd_relay_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination
+<% } -%>
+<% if $dkim_milter_enabled { -%>
+
+milter_default_action = accept
+milter_protocol = 6
+smtpd_milters = <%= $dkim_milter_socket %>
+non_smtpd_milters = <%= $dkim_milter_socket %>
 <% } -%>

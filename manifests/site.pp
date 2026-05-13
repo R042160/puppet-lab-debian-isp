@@ -7,6 +7,8 @@ node default {
     'isp_bind',
     'isp_dhcp',
     'isp_postfix',
+    'isp_dovecot',
+    'isp_opendkim',
     'isp_nginx',
   ])
 
@@ -14,5 +16,13 @@ node default {
 
   if 'isp_postfix' in $profile_classes and 'isp_dovecot' in $profile_classes {
     Class['isp_postfix'] -> Class['isp_dovecot']
+  }
+
+  if 'isp_opendkim' in $profile_classes and 'isp_bind' in $profile_classes {
+    Class['isp_opendkim'] -> Class['isp_bind']
+  }
+
+  if 'isp_opendkim' in $profile_classes and 'isp_postfix' in $profile_classes {
+    Class['isp_opendkim'] -> Class['isp_postfix']
   }
 }

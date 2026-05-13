@@ -1,0 +1,19 @@
+<%- |
+  String[1] $socket,
+| -%>
+# Managed by Puppet (module: isp_opendkim). Manual edits will be overwritten.
+
+Syslog                  yes
+UMask                   002
+Mode                    sv
+Canonicalization        relaxed/simple
+SubDomains              no
+OversignHeaders         From
+Socket                  <%= $socket %>
+PidFile                 /run/opendkim/opendkim.pid
+UserID                  opendkim
+
+KeyTable                file:/etc/opendkim/key.table
+SigningTable            refile:/etc/opendkim/signing.table
+ExternalIgnoreList      refile:/etc/opendkim/trusted.hosts
+InternalHosts           refile:/etc/opendkim/trusted.hosts

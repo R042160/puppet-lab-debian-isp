@@ -1,0 +1,7 @@
+<%- |
+  String[1] $domain,
+  String[1] $key_name,
+| -%>
+# Managed by Puppet (module: isp_opendkim). Manual edits will be overwritten.
+
+*@<%= $domain %> <%= $key_name %>

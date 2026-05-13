@@ -1,0 +1,9 @@
+<%- |
+  String[1] $domain,
+  String[1] $selector,
+  String[1] $key_name,
+  String[1] $private_key,
+| -%>
+# Managed by Puppet (module: isp_opendkim). Manual edits will be overwritten.
+
+<%= $key_name %> <%= $domain %>:<%= $selector %>:<%= $private_key %>

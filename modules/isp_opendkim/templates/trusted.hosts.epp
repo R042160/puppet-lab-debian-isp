@@ -1,0 +1,8 @@
+<%- |
+  Array[String[1]] $trusted_hosts,
+| -%>
+# Managed by Puppet (module: isp_opendkim). Manual edits will be overwritten.
+
+<% $trusted_hosts.each |$host| { -%>
+<%= $host %>
+<% } -%>

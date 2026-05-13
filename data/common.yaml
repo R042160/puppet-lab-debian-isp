@@ -10,6 +10,7 @@ isp_bind::listen_v6: true
 
 # ─── node classification ──────────────────────────────────────────
 profile::classes:
+  - 'isp_opendkim'
   - 'isp_bind'
   - 'isp_dhcp'
   - 'isp_postfix'
@@ -20,7 +21,7 @@ isp_bind::zones:
   'lab.local':
     role: 'primary'
     ttl: 300
-    serial: 2026051301
+    serial: 2026051302
     primary_ns: 'ns1.lab.local.'
     admin_email: 'hostmaster.lab.local.'
     refresh: 3600
@@ -60,6 +61,24 @@ isp_bind::zones:
       - name: 'puppet-lab'
         type: 'A'
         value: '172.28.53.10'
+      - name: '@'
+        type: 'TXT'
+        value: '"v=spf1 mx -all"'
+      - name: '_dmarc'
+        type: 'TXT'
+        value: '"v=DMARC1; p=none; rua=mailto:postmaster@lab.local"'
+    includes:
+      - '/etc/opendkim/keys/lab.local/default.txt'
+
+# ─── isp_opendkim ──────────────────────────────────────────────────
+isp_opendkim::domain: 'lab.local'
+isp_opendkim::selector: 'default'
+isp_opendkim::socket: 'inet:8891@127.0.0.1'
+isp_opendkim::trusted_hosts:
+  - '127.0.0.1'
+  - 'localhost'
+  - '172.28.53.0/24'
+  - '*.lab.local'
 
 # ─── isp_dhcp ──────────────────────────────────────────────────────
 # RFC 5737 TEST-NET-1 (documentation-only address space)
@@ -74,6 +93,8 @@ isp_dhcp::manage_service: false
 isp_postfix::myhostname: 'puppet-lab.local'
 isp_postfix::mydomain:   'lab.local'
 isp_postfix::submission_enabled: true
+isp_postfix::dkim_milter_enabled: true
+isp_postfix::dkim_milter_socket: 'inet:127.0.0.1:8891'
 
 # ─── isp_dovecot ───────────────────────────────────────────────────
 isp_dovecot::mail_location: 'maildir:~/Maildir'

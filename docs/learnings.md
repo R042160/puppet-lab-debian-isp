@@ -268,3 +268,40 @@ Das macht Puppet/Salt zum nächsten logischen Schritt nach „Bash-Skripte mit K
 1. OpenDKIM installieren und Signing-Socket an Postfix anbinden.
 2. DKIM-Public-Key als DNS-Record in `lab.local` modellieren.
 3. SPF + DMARC Records ergänzen.
+
+## v0.9 – OpenDKIM + DKIM/SPF/DMARC Records (Mai 2026)
+
+### Was geändert wurde
+
+- Neues Modul `isp_opendkim`:
+  - installiert `opendkim` und `opendkim-tools`
+  - generiert lokal eine DKIM-Key mit `opendkim-genkey`
+  - verwaltet `opendkim.conf`
+  - verwaltet `key.table`, `signing.table` und `trusted.hosts`
+  - startet den OpenDKIM-Milter auf `inet:8891@127.0.0.1`
+- Postfix nutzt OpenDKIM jetzt als Milter:
+  - `smtpd_milters = inet:127.0.0.1:8891`
+  - `non_smtpd_milters = inet:127.0.0.1:8891`
+- BIND `lab.local` bekommt Mail-Policy-Records:
+  - SPF: `v=spf1 mx -all`
+  - DMARC: `v=DMARC1; p=none; ...`
+  - DKIM via `$INCLUDE /etc/opendkim/keys/lab.local/default.txt`
+- `scripts/smoke.sh` prüft jetzt:
+  - OpenDKIM läuft.
+  - Der Milter-Port `8891` ist erreichbar.
+  - Postfix zeigt den OpenDKIM-Milter in `postconf`.
+  - BIND serviert DKIM, SPF und DMARC per `dig`.
+
+### Was ich dabei gelernt habe
+
+- **DKIM hat eine private und eine öffentliche Seite.** OpenDKIM signiert mit der privaten Key. DNS veröffentlicht nur den Public-Key.
+- **Private Keys gehören nicht ins GitHub-Repo.** Deshalb generiert Puppet die Lab-Key lokal auf dem Node und BIND inkludiert nur die öffentliche `.txt`-Datei.
+- **Milter ist die Brücke zwischen Postfix und OpenDKIM.** Postfix übergibt Mail an OpenDKIM über `inet:127.0.0.1:8891`, bevor die Mail weiterverarbeitet wird.
+- **SPF, DKIM und DMARC sind drei verschiedene Kontrollen.** SPF sagt, welche Sender erlaubt sind. DKIM beweist Signatur. DMARC sagt, wie Empfänger mit SPF/DKIM-Ergebnissen umgehen sollen.
+- **Puppet-Reihenfolge ist hier kritisch.** OpenDKIM muss die Public-Key-Datei erzeugen, bevor BIND die Zone mit `$INCLUDE` validiert.
+
+### Was als Nächstes kommt (v1.0)
+
+1. Echte signierte Testmail erzeugen und `DKIM-Signature` im lokalen Maildir prüfen.
+2. Danach Kea DHCP als nächster ISP-Gap.
+3. Optional: PDK-Workflow vollständig nachziehen.

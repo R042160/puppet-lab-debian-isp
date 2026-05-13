@@ -22,3 +22,10 @@ $TTL <%= $zone['ttl'] %>
 <%= $record['name'] %> IN <%= $record['type'] %> <%= $record['value'] %>
 <% } -%>
 <% } -%>
+<% if $zone['includes'] and !empty($zone['includes']) { -%>
+
+; Includes
+<% $zone['includes'].each |$include| { -%>
+$INCLUDE <%= $include %>
+<% } -%>
+<% } -%>

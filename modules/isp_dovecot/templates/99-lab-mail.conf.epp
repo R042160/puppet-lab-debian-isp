@@ -1,0 +1,6 @@
+<%- |
+  String[1] $mail_location,
+| -%>
+# Managed by Puppet (module: isp_dovecot). Manual edits will be overwritten.
+
+mail_location = <%= $mail_location %>

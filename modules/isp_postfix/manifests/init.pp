@@ -1,7 +1,7 @@
 # == Class: isp_postfix
 #
-# Installs Postfix with a local-only delivery profile. No internet relay.
-# DKIM/SPF/DMARC are explicit next-step learnings, not part of v0.1.
+# Installs Postfix with lab submission support. No internet relay.
+# DKIM/SPF/DMARC are explicit next-step learnings, not part of this module.
 #
 # myhostname / mydomain MUST be provided via Hiera — they are
 # environment-specific.
@@ -9,6 +9,7 @@
 class isp_postfix (
   String $myhostname,
   String $mydomain,
+  Boolean $submission_enabled = true,
 ) {
 
   $preseed_mailer_type = "/bin/echo 'postfix postfix/main_mailer_type select Local only' | /usr/bin/debconf-set-selections"
@@ -36,8 +37,21 @@ class isp_postfix (
     group   => 'root',
     mode    => '0644',
     content => epp('isp_postfix/main.cf.epp', {
-      'myhostname' => $myhostname,
-      'mydomain'   => $mydomain,
+      'myhostname'         => $myhostname,
+      'mydomain'           => $mydomain,
+      'submission_enabled' => $submission_enabled,
+    }),
+    require => Package['postfix'],
+    notify  => Service['postfix'],
+  }
+
+  file { '/etc/postfix/master.cf':
+    ensure  => file,
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0644',
+    content => epp('isp_postfix/master.cf.epp', {
+      'submission_enabled' => $submission_enabled,
     }),
     require => Package['postfix'],
     notify  => Service['postfix'],

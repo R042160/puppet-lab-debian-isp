@@ -200,3 +200,39 @@ Das macht Puppet/Salt zum nächsten logischen Schritt nach „Bash-Skripte mit K
 1. Postfix Submission auf Port 587.
 2. Dovecot SASL/Auth für Mail-Login.
 3. Danach DKIM-Signing mit OpenDKIM.
+
+## v0.7 – Postfix Submission + Dovecot SASL/Maildir (Mai 2026)
+
+### Was geändert wurde
+
+- `isp_postfix` verwaltet jetzt zusätzlich `/etc/postfix/master.cf`.
+- Postfix hört im Lab auf Submission-Port `587`.
+- `main.cf` nutzt Maildir (`home_mailbox = Maildir/`) statt nur lokaler Default-Delivery.
+- Postfix ist für Dovecot-SASL vorbereitet:
+  - `smtpd_sasl_type = dovecot`
+  - `smtpd_sasl_path = private/auth`
+- Neues Modul `isp_dovecot`:
+  - installiert `dovecot-core` und `dovecot-imapd`
+  - setzt `mail_location = maildir:~/Maildir`
+  - aktiviert Lab-Auth-Mechanismen `plain login`
+  - erzeugt den Auth-Socket `/var/spool/postfix/private/auth` für Postfix
+- `scripts/smoke.sh` prüft jetzt:
+  - Dovecot läuft.
+  - Port `587` ist lokal erreichbar.
+  - Der Test-Client erreicht Port `587` über das Lab-Netz.
+  - Der Dovecot-Auth-Socket für Postfix existiert.
+  - Dovecot zeigt die aktive Maildir-Konfiguration.
+
+### Was ich dabei gelernt habe
+
+- **Port 25 und Port 587 sind verschiedene Rollen.** Port 25 ist MTA-zu-MTA. Port 587 ist Submission: ein Mail-Client gibt authentifiziert Mail ab.
+- **Postfix macht SMTP, Dovecot macht Auth/IMAP.** In diesem Setup fragt Postfix Dovecot über einen Unix-Socket, ob ein Login gültig ist.
+- **Maildir ist dateibasiert und robust für IMAP.** Jede Mail wird als eigene Datei gespeichert, statt alles in eine einzelne Mbox-Datei zu schreiben.
+- **Lab-Auth ohne TLS ist nur didaktisch.** In Produktion muss Submission Auth über TLS laufen. Dieses Lab trennt zuerst SASL-Wiring von Zertifikatsmanagement.
+- **Socket-Existenz ist ein guter Smoke-Test.** Wenn `/var/spool/postfix/private/auth` fehlt, ist die Postfix-Dovecot-Verkabelung kaputt.
+
+### Was als Nächstes kommt (v0.8)
+
+1. Lab-User für einen echten SMTP-AUTH-Test sauber modellieren.
+2. Danach OpenDKIM einführen.
+3. SPF/DMARC als DNS-Records in `lab.local` ergänzen.

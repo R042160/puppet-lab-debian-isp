@@ -1,0 +1,8 @@
+<%- |
+  Boolean $disable_plaintext_auth,
+  Array[String[1]] $auth_mechanisms,
+| -%>
+# Managed by Puppet (module: isp_dovecot). Manual edits will be overwritten.
+
+disable_plaintext_auth = <%= $disable_plaintext_auth ? { true => 'yes', false => 'no' } %>
+auth_mechanisms = <%= $auth_mechanisms.join(' ') %>

@@ -1,0 +1,6 @@
+# Managed by Puppet (module: isp_dovecot). Manual edits will be overwritten.
+#
+# Lab-only: TLS is disabled here so SASL wiring can be learned without
+# certificate management. Production mail submission must require TLS.
+
+ssl = no

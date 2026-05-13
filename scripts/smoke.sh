@@ -75,11 +75,19 @@ CONTAINER="${PRIMARY_CONTAINER}"
 check "named    running"          bash -c "pgrep -x named >/dev/null"
 check "isc-dhcp present (config)" bash -c "[ -f /etc/dhcp/dhcpd.conf ]"
 check "postfix  running"          bash -c "pgrep -x master >/dev/null"
+check "dovecot  running"          bash -c "pgrep -x dovecot >/dev/null"
 check "nginx    running"          bash -c "pgrep -x nginx  >/dev/null"
 
 echo
 echo "==> Nginx serves managed page on port 80"
 check "HTTP 200 on /"             bash -c "curl -sSf http://127.0.0.1/ | grep -q 'puppet-lab'"
+
+echo
+echo "==> Mail submission and Dovecot SASL"
+check_in "${PRIMARY_CONTAINER}" "submission 587 listens locally" bash -c "timeout 2 bash -c '</dev/tcp/127.0.0.1/587'"
+check_in "${CLIENT_CONTAINER}" "client reaches submission 587" bash -c "timeout 2 bash -c '</dev/tcp/${PRIMARY_IP}/587'"
+check_in "${PRIMARY_CONTAINER}" "dovecot auth socket for postfix" bash -c "[ -S /var/spool/postfix/private/auth ]"
+check_in "${PRIMARY_CONTAINER}" "dovecot Maildir config active" bash -c "doveconf -n | grep -q '^mail_location = maildir:~/Maildir'"
 
 echo
 echo "==> Primary BIND9 authoritative answers"

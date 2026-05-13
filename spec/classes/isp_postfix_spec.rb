@@ -17,10 +17,20 @@ describe 'isp_postfix' do
       .with(owner: 'root', group: 'root', mode: '0644')
       .with_content(%r{myhostname = puppet-lab\.local})
       .with_content(%r{mydomain   = lab\.local})
+      .with_content(%r{home_mailbox = Maildir/})
+      .with_content(%r{smtpd_sasl_type = dovecot})
+      .that_requires('Package[postfix]')
+      .that_notifies('Service[postfix]')
+  end
+
+  it do
+    is_expected.to contain_file('/etc/postfix/master.cf')
+      .with(owner: 'root', group: 'root', mode: '0644')
+      .with_content(%r{^submission inet n\s+-\s+y\s+-\s+-\s+smtpd})
+      .with_content(%r{smtpd_sasl_auth_enable=yes})
       .that_requires('Package[postfix]')
       .that_notifies('Service[postfix]')
   end
 
   it { is_expected.to contain_service('postfix').with(ensure: 'running', enable: true) }
 end
-

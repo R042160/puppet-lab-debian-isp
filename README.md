@@ -11,11 +11,11 @@
 
 ## Ziel
 
-Selbständig durcharbeiten, was die Stellenausschreibung *„System Engineer mit Puppet/Salt"* erwartet – an einem echten, reproduzierbaren Setup statt nur in einem Buch. Vier ISP-Kerndienste in Puppet-Manifesten, auf einem Debian-12-Container:
+Selbständig durcharbeiten, was die Stellenausschreibung *„System Engineer mit Puppet/Salt"* erwartet – an einem echten, reproduzierbaren Setup statt nur in einem Buch. ISP-Kerndienste in Puppet-Manifesten, auf Debian-12-Containern:
 
 - **BIND9** – authoritative DNS, IPv4/IPv6
 - **ISC-DHCP-Server** – LAN-Lease-Pool
-- **Postfix** – minimaler MTA mit Local-Delivery
+- **Postfix + Dovecot** – Submission 587, SASL-Auth-Socket, Maildir/IMAP
 - **Nginx** – Default-Vhost + TLS-Vorbereitung
 
 ## Lab-Aufbau
@@ -27,9 +27,9 @@ Selbständig durcharbeiten, was die Stellenausschreibung *„System Engineer mit
    docker-compose│  ┌────────┐ ┌────────┐ ┌────────┐│
    ───────────▶  │  │ bind9  │ │  dhcp  │ │postfix ││
                  │  └────────┘ └────────┘ └────────┘│
-                 │           ┌────────┐             │
-                 │           │ nginx  │             │
-                 │           └────────┘             │
+                 │  ┌────────┐ ┌────────┐           │
+                 │  │dovecot │ │ nginx  │           │
+                 │  └────────┘ └────────┘           │
                  │                                   │
                  │  puppet apply manifests/site.pp   │
                  └───────────────────────────────────┘
@@ -58,7 +58,7 @@ git clone https://github.com/R042160/puppet-lab-debian-isp.git
 cd puppet-lab-debian-isp
 docker compose up -d
 ./scripts/apply.sh        # läuft puppet apply auf Primary + Secondary
-./scripts/smoke.sh        # prüft Dienste, DNS-Antworten, erlaubtes und verbotenes AXFR
+./scripts/smoke.sh        # prüft Dienste, Mail-Submission, DNS und AXFR-Policy
 ```
 
 ## Unit-Tests
@@ -89,6 +89,7 @@ bundle install
 ├── modules/
 │   ├── isp_bind/          # BIND9 authoritative
 │   ├── isp_dhcp/          # ISC-DHCP-Server
+│   ├── isp_dovecot/       # Dovecot IMAP + SASL auth socket
 │   ├── isp_postfix/       # Postfix MTA
 │   └── isp_nginx/         # Nginx default vhost
 ├── spec/
@@ -118,12 +119,13 @@ bundle install
 
 ## Lernpfad
 
-*Aktuelle Version: **v0.6** – AXFR-Policy mit negativem Test abgesichert.*
+*Aktuelle Version: **v0.7** – Postfix Submission + Dovecot SASL/Maildir eingeführt.*
 
 - [x] Repo-Struktur + docker-compose
 - [x] `isp_bind` Modul (Package + Service + named.conf.options)
 - [x] `isp_dhcp` Modul (Package + Service + dhcpd.conf)
 - [x] `isp_postfix` Modul (Package + Service + main.cf)
+- [x] `isp_dovecot` Modul (Package + Service + Maildir/SASL)
 - [x] `isp_nginx` Modul (Package + Service + default-site)
 - [x] `scripts/apply.sh` + `scripts/smoke.sh`
 - [x] **Hiera-Refactor** (Daten aus Manifesten ausgelagert) → `hiera.yaml` + `data/common.yaml`
@@ -133,6 +135,7 @@ bundle install
 - [x] **BIND9 Secondary-DNS** mit Notify + AXFR
 - [x] **GitHub Actions CI** (`bundle exec rake spec`, `scripts/lint.sh`, `docker compose config`)
 - [x] **AXFR-Policy-Test**: Secondary darf transferieren, Client wird abgewiesen
+- [x] **Mail Submission**: Postfix 587 + Dovecot SASL-Socket + Maildir
 - [ ] Voller PDK-Workflow (`pdk validate`, `pdk test unit`)
 - [ ] Master/Agent statt apply
 - [ ] Salt-Variante zum Vergleich

@@ -11,4 +11,8 @@ node default {
   ])
 
   include $profile_classes
+
+  if 'isp_postfix' in $profile_classes and 'isp_dovecot' in $profile_classes {
+    Class['isp_postfix'] -> Class['isp_dovecot']
+  }
 }

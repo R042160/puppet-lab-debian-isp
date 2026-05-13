@@ -13,6 +13,7 @@ profile::classes:
   - 'isp_bind'
   - 'isp_dhcp'
   - 'isp_postfix'
+  - 'isp_dovecot'
   - 'isp_nginx'
 
 isp_bind::zones:
@@ -72,6 +73,14 @@ isp_dhcp::manage_service: false
 # ─── isp_postfix ───────────────────────────────────────────────────
 isp_postfix::myhostname: 'puppet-lab.local'
 isp_postfix::mydomain:   'lab.local'
+isp_postfix::submission_enabled: true
+
+# ─── isp_dovecot ───────────────────────────────────────────────────
+isp_dovecot::mail_location: 'maildir:~/Maildir'
+isp_dovecot::disable_plaintext_auth: false
+isp_dovecot::auth_mechanisms:
+  - 'plain'
+  - 'login'
 
 # ─── isp_nginx ─────────────────────────────────────────────────────
 isp_nginx::server_name: 'puppet-lab.local'

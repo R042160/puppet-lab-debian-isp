@@ -236,3 +236,35 @@ Das macht Puppet/Salt zum nächsten logischen Schritt nach „Bash-Skripte mit K
 1. Lab-User für einen echten SMTP-AUTH-Test sauber modellieren.
 2. Danach OpenDKIM einführen.
 3. SPF/DMARC als DNS-Records in `lab.local` ergänzen.
+
+## v0.8 – SMTP AUTH mit Dovecot passwd-file (Mai 2026)
+
+### Was geändert wurde
+
+- `isp_dovecot` verwaltet jetzt einen virtuellen Mail-User-Store:
+  - System-User/Group `vmail`
+  - Mail-Root `/var/mail/vhosts`
+  - User-Datei `/etc/dovecot/users`
+- Hiera enthält einen Dummy-Lab-User:
+  - User: `labuser@lab.local`
+  - Password: `labpass`
+  - Wichtig: nur Lab-Credential, kein echtes Secret
+- Dovecot nutzt zusätzlich `passwd-file` für Auth:
+  - `passdb passwd-file`
+  - `userdb passwd-file`
+- `scripts/smoke.sh` prüft jetzt zwei Auth-Wege:
+  - `doveadm auth test labuser@lab.local labpass`
+  - echter SMTP-Dialog gegen Postfix Submission `587` mit `AUTH PLAIN`
+
+### Was ich dabei gelernt habe
+
+- **SASL-Socket vorhanden ist nicht gleich Login funktioniert.** Der Socket zeigt nur, dass Postfix Dovecot erreichen kann. Ein Auth-Test beweist, dass User, Passwort und Dovecot-Backend zusammenpassen.
+- **`passwd-file` ist ideal für ein Lab.** Es vermeidet echte System-Accounts und zeigt trotzdem sauber, wie Dovecot User validiert.
+- **SMTP AUTH ist ein Dialog.** Client verbindet sich, sendet `EHLO`, sieht `AUTH`, sendet einen Base64-Login und erwartet `235 Authentication successful`.
+- **Dummy-Passwörter sind keine Secrets.** Trotzdem werden sie klar markiert, damit niemand sie mit Produktions-Credentials verwechselt.
+
+### Was als Nächstes kommt (v0.9)
+
+1. OpenDKIM installieren und Signing-Socket an Postfix anbinden.
+2. DKIM-Public-Key als DNS-Record in `lab.local` modellieren.
+3. SPF + DMARC Records ergänzen.

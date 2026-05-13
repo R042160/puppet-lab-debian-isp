@@ -1,0 +1,11 @@
+<%- |
+  Hash[String[1], Hash[String[1], String[1]]] $lab_users,
+  Integer[1] $virtual_uid,
+  Integer[1] $virtual_gid,
+| -%>
+# Managed by Puppet (module: isp_dovecot). Manual edits will be overwritten.
+# Format: user:password:uid:gid:gecos:home:shell
+
+<% $lab_users.each |$username, $user| { -%>
+<%= $username %>:<%= $user['password_hash'] %>:<%= $virtual_uid %>:<%= $virtual_gid %>::<%= $user['home'] %>::
+<% } -%>

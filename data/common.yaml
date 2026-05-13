@@ -81,6 +81,16 @@ isp_dovecot::disable_plaintext_auth: false
 isp_dovecot::auth_mechanisms:
   - 'plain'
   - 'login'
+isp_dovecot::virtual_uid: 5000
+isp_dovecot::virtual_gid: 5000
+isp_dovecot::virtual_mail_root: '/var/mail/vhosts'
+isp_dovecot::virtual_mail_domain: 'lab.local'
+isp_dovecot::lab_users:
+  'labuser@lab.local':
+    # Dummy lab credential for SMTP AUTH smoke tests only.
+    # Password: labpass
+    password_hash: '{SHA512-CRYPT}$6$XvKyn.NM04ZNI68g$MCEKBImPU/IZMTi6MoByOy1befPdszdfAo28Tk5FbcOaZBGhdz3K2SjhqiqwZ6wBGfHknZpWTgs/njd2uErOX/'
+    home: '/var/mail/vhosts/lab.local/labuser'
 
 # ─── isp_nginx ─────────────────────────────────────────────────────
 isp_nginx::server_name: 'puppet-lab.local'

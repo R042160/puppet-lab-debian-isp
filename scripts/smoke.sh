@@ -7,6 +7,8 @@ PRIMARY_CONTAINER="${PRIMARY_CONTAINER:-puppet-lab}"
 SECONDARY_CONTAINER="${SECONDARY_CONTAINER:-puppet-lab-secondary}"
 CLIENT_CONTAINER="${CLIENT_CONTAINER:-puppet-lab-client}"
 PRIMARY_IP="${PRIMARY_IP:-172.28.53.10}"
+LAB_MAIL_USER="${LAB_MAIL_USER:-labuser@lab.local}"
+LAB_MAIL_PASSWORD="${LAB_MAIL_PASSWORD:-labpass}"
 FAIL=0
 
 check() {
@@ -63,6 +65,42 @@ check_denied_axfr_in() {
   fi
 }
 
+check_smtp_auth_in() {
+  local container="$1"; shift
+  local label="$1"; shift
+  local auth_token
+
+  auth_token="$(printf '\0%s\0%s' "${LAB_MAIL_USER}" "${LAB_MAIL_PASSWORD}" | base64 -w0)"
+
+  if docker exec \
+    -e PRIMARY_IP="${PRIMARY_IP}" \
+    -e SMTP_AUTH_TOKEN="${auth_token}" \
+    "${container}" \
+    timeout 5 bash -c '
+      set -euo pipefail
+      exec 3<>"/dev/tcp/${PRIMARY_IP}/587"
+      IFS= read -r banner <&3
+      printf "EHLO client.lab.local\r\n" >&3
+      while IFS= read -r line <&3; do
+        case "${line}" in
+          250\ *) break ;;
+        esac
+      done
+      printf "AUTH PLAIN %s\r\n" "${SMTP_AUTH_TOKEN}" >&3
+      IFS= read -r auth_reply <&3
+      printf "QUIT\r\n" >&3
+      case "${auth_reply}" in
+        235*) exit 0 ;;
+        *) printf "%s\n" "${auth_reply}" >&2; exit 1 ;;
+      esac
+    ' >/dev/null 2>&1; then
+    printf "  \033[32mOK\033[0m   %s\n" "${label}"
+  else
+    printf "  \033[31mFAIL\033[0m %s\n" "${label}"
+    FAIL=1
+  fi
+}
+
 for container in "${PRIMARY_CONTAINER}" "${SECONDARY_CONTAINER}" "${CLIENT_CONTAINER}"; do
   if ! docker exec "${container}" true >/dev/null 2>&1; then
     echo "Cannot exec into container '${container}'. Check Docker permissions or start it with: docker compose up -d" >&2
@@ -88,6 +126,8 @@ check_in "${PRIMARY_CONTAINER}" "submission 587 listens locally" bash -c "timeou
 check_in "${CLIENT_CONTAINER}" "client reaches submission 587" bash -c "timeout 2 bash -c '</dev/tcp/${PRIMARY_IP}/587'"
 check_in "${PRIMARY_CONTAINER}" "dovecot auth socket for postfix" bash -c "[ -S /var/spool/postfix/private/auth ]"
 check_in "${PRIMARY_CONTAINER}" "dovecot Maildir config active" bash -c "doveconf -n | grep -q '^mail_location = maildir:~/Maildir'"
+check_in "${PRIMARY_CONTAINER}" "dovecot passwd-file auth works" bash -c "doveadm auth test '${LAB_MAIL_USER}' '${LAB_MAIL_PASSWORD}'"
+check_smtp_auth_in "${CLIENT_CONTAINER}" "SMTP AUTH succeeds via submission"
 
 echo
 echo "==> Primary BIND9 authoritative answers"

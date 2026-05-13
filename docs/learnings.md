@@ -302,6 +302,44 @@ Das macht Puppet/Salt zum nächsten logischen Schritt nach „Bash-Skripte mit K
 
 ### Was als Nächstes kommt (v1.0)
 
-1. Echte signierte Testmail erzeugen und `DKIM-Signature` im lokalen Maildir prüfen.
-2. Danach Kea DHCP als nächster ISP-Gap.
-3. Optional: PDK-Workflow vollständig nachziehen.
+1. Restic-Backup mit Restore-Check einführen.
+2. Danach Monitoring als nächster Init7-Gap.
+3. Optional: Echte signierte Testmail erzeugen und `DKIM-Signature` im lokalen Maildir prüfen.
+
+## v1.0 – Restic-Backup mit Restore-Check (Mai 2026)
+
+### Was geändert wurde
+
+- Neues Modul `isp_backup`:
+  - installiert `restic`
+  - erstellt ein lokales Lab-Repository unter `/var/backups/restic/lab-repo`
+  - verwaltet ein Dummy-Lab-Passwort unter `/etc/restic/lab-password`
+  - initialisiert das Repository mit `restic init`
+- Zwei verwaltete Operator-Scripts:
+  - `/usr/local/sbin/lab-restic-backup`
+  - `/usr/local/sbin/lab-restic-restore-check`
+- Backup-Scope im Lab:
+  - `/etc/bind`
+  - `/etc/postfix`
+  - `/etc/dovecot`
+  - `/etc/opendkim`
+  - `/lab/data`
+- `scripts/smoke.sh` prüft jetzt:
+  - Restic-Repository ist lesbar.
+  - Ein Snapshot kann erzeugt werden.
+  - `restore latest` funktioniert in ein temporäres Restore-Verzeichnis.
+  - Wiederhergestellte Dateien wie `named.conf.local`, `main.cf` und `dovecot.conf` existieren.
+
+### Was ich dabei gelernt habe
+
+- **Backup ohne Restore-Test ist nur Hoffnung.** Ein Snapshot beweist noch nicht, dass man Daten zurückbekommt.
+- **Restic trennt Repository, Passwort und Snapshot sauber.** Das macht das Lab realistischer als ein simples `rsync` ohne Versionierung.
+- **Lokales Backup ist nicht Offsite.** Für Produktion fehlt noch Remote-Repository, Retention, Alerting und regelmässige Restore-Drills.
+- **Backup enthält sensitive Config.** Im Lab ist das lokal im Container. In Produktion müssten Repository-Zugriff, Passwort und Retention streng geschützt werden.
+- **Ein Smoke-Test darf echte Operationen prüfen.** Backup + Restore ist langsamere Integration als Unit-Test, aber extrem wertvoll.
+
+### Was als Nächstes kommt (v1.1)
+
+1. Monitoring mit Prometheus Node Exporter oder Icinga/Checkmk-ähnlichen Checks.
+2. Backup-Retention (`forget --keep-* --prune`) als nächster Schritt.
+3. Optional: signierte Testmail mit `DKIM-Signature` im Maildir prüfen.

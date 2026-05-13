@@ -139,6 +139,13 @@ check_in "${PRIMARY_CONTAINER}" "SPF record served by BIND" bash -c "dig @127.0.
 check_in "${PRIMARY_CONTAINER}" "DMARC record served by BIND" bash -c "dig @127.0.0.1 _dmarc.lab.local TXT +short | grep -q 'v=DMARC1; p=none'"
 
 echo
+echo "==> Backup and restore"
+check_in "${PRIMARY_CONTAINER}" "restic repository initialized" bash -c "restic -r /var/backups/restic/lab-repo --password-file /etc/restic/lab-password snapshots >/dev/null"
+check_in "${PRIMARY_CONTAINER}" "restic backup creates snapshot" bash -c "/usr/local/sbin/lab-restic-backup"
+check_in "${PRIMARY_CONTAINER}" "restic restore-check passes" bash -c "/usr/local/sbin/lab-restic-restore-check"
+check_in "${PRIMARY_CONTAINER}" "restic repository integrity" bash -c "restic -r /var/backups/restic/lab-repo --password-file /etc/restic/lab-password check"
+
+echo
 echo "==> Primary BIND9 authoritative answers"
 check_in "${PRIMARY_CONTAINER}" "primary lab.local SOA"   bash -c "dig @127.0.0.1 lab.local SOA +short | grep -q 'ns1.lab.local.'"
 check_in "${PRIMARY_CONTAINER}" "primary www.lab.local A" bash -c "dig @127.0.0.1 www.lab.local A +short | grep -qx '192.0.2.20'"

@@ -1,0 +1,32 @@
+<%- |
+  String[1] $repository,
+  String[1] $password_file,
+| -%>
+#!/usr/bin/env bash
+# Managed by Puppet (module: isp_backup). Manual edits will be overwritten.
+set -euo pipefail
+
+repository='<%= $repository %>'
+password_file='<%= $password_file %>'
+restore_target="${1:-/tmp/restic-restore-check}"
+
+case "${restore_target}" in
+  /tmp/restic-restore-check*)
+    rm -rf "${restore_target}"
+    ;;
+  *)
+    echo "Restore target must be under /tmp/restic-restore-check*" >&2
+    exit 1
+    ;;
+esac
+
+mkdir -p "${restore_target}"
+
+restic -r "${repository}" --password-file "${password_file}" \
+  restore latest --target "${restore_target}"
+
+test -f "${restore_target}/etc/bind/named.conf.local"
+test -f "${restore_target}/etc/postfix/main.cf"
+test -f "${restore_target}/etc/dovecot/dovecot.conf"
+
+rm -rf "${restore_target}"

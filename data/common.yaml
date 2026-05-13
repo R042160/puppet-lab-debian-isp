@@ -15,6 +15,7 @@ profile::classes:
   - 'isp_dhcp'
   - 'isp_postfix'
   - 'isp_dovecot'
+  - 'isp_backup'
   - 'isp_nginx'
 
 isp_bind::zones:
@@ -112,6 +113,17 @@ isp_dovecot::lab_users:
     # Password: labpass
     password_hash: '{SHA512-CRYPT}$6$XvKyn.NM04ZNI68g$MCEKBImPU/IZMTi6MoByOy1befPdszdfAo28Tk5FbcOaZBGhdz3K2SjhqiqwZ6wBGfHknZpWTgs/njd2uErOX/'
     home: '/var/mail/vhosts/lab.local/labuser'
+
+# ─── isp_backup ────────────────────────────────────────────────────
+isp_backup::repository: '/var/backups/restic/lab-repo'
+isp_backup::password_file: '/etc/restic/lab-password'
+isp_backup::password: 'lab-restic-passphrase'
+isp_backup::backup_paths:
+  - '/etc/bind'
+  - '/etc/postfix'
+  - '/etc/dovecot'
+  - '/etc/opendkim'
+  - '/lab/data'
 
 # ─── isp_nginx ─────────────────────────────────────────────────────
 isp_nginx::server_name: 'puppet-lab.local'

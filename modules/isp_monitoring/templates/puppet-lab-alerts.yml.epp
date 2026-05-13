@@ -1,0 +1,57 @@
+<%- |
+  String[1] $alert_for,
+  Integer[1] $stale_seconds,
+| -%>
+# Managed by Puppet (module: isp_monitoring). Manual edits will be overwritten.
+groups:
+  - name: puppet-lab.rules
+    rules:
+      - alert: PuppetLabMonitoringCheckStale
+        expr: time() - puppet_lab_check_timestamp_seconds > <%= $stale_seconds %>
+        for: <%= $alert_for %>
+        labels:
+          severity: warning
+          component: monitoring
+        annotations:
+          summary: "Puppet lab monitoring check is stale"
+          description: "The textfile collector metrics have not refreshed for more than <%= $stale_seconds %> seconds."
+
+      - alert: PuppetLabServiceDown
+        expr: puppet_lab_service_up == 0
+        for: <%= $alert_for %>
+        labels:
+          severity: critical
+          component: service
+        annotations:
+          summary: "Puppet lab service {{ $labels.service }} is down"
+          description: "The managed service process {{ $labels.service }} is not running on {{ $labels.instance }}."
+
+      - alert: PuppetLabTCPCheckFailed
+        expr: puppet_lab_tcp_check_up == 0
+        for: <%= $alert_for %>
+        labels:
+          severity: critical
+          component: tcp
+        annotations:
+          summary: "Puppet lab TCP check {{ $labels.name }} failed"
+          description: "{{ $labels.host }}:{{ $labels.port }} is not accepting TCP connections."
+
+      - alert: PuppetLabDNSAuthoritativeFailed
+        expr: puppet_lab_dns_authoritative_up == 0
+        for: <%= $alert_for %>
+        labels:
+          severity: critical
+          component: dns
+        annotations:
+          summary: "Puppet lab authoritative DNS check failed"
+          description: "BIND did not return the expected authoritative SOA for lab.local."
+
+      - alert: PuppetLabBackupRepositoryFailed
+        expr: puppet_lab_backup_repository_ok == 0
+        for: <%= $alert_for %>
+        labels:
+          severity: critical
+          component: backup
+        annotations:
+          summary: "Puppet lab Restic repository check failed"
+          description: "Restic could not read the configured lab backup repository."

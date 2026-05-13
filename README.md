@@ -19,7 +19,7 @@ Selbständig durcharbeiten, was die Stellenausschreibung *„System Engineer mit
 - **Postfix + Dovecot** – Submission 587, SMTP AUTH, SASL-Socket, Maildir/IMAP
 - **OpenDKIM** – DKIM-Signing mit lokal generierter Lab-Key
 - **Restic** – lokales Config-Backup mit Restore-Check und Retention
-- **Prometheus Node Exporter** – Host-Metriken + Lab-Health-Metriken
+- **Prometheus Node Exporter** – Host-Metriken, Lab-Health-Metriken + Alert-Regeln
 - **Nginx** – Default-Vhost + TLS-Vorbereitung
 
 ## Lab-Aufbau
@@ -68,7 +68,7 @@ git clone https://github.com/R042160/puppet-lab-debian-isp.git
 cd puppet-lab-debian-isp
 docker compose up -d
 ./scripts/apply.sh        # läuft puppet apply auf Primary + Secondary
-./scripts/smoke.sh        # prüft Dienste, SMTP AUTH, DKIM/SPF/DMARC, Backup/Retention/Restore, Kea, Monitoring, DNS und AXFR
+./scripts/smoke.sh        # prüft Dienste, SMTP AUTH, DKIM/SPF/DMARC, Backup/Retention/Restore, Kea, Monitoring/Alerts, DNS und AXFR
 ```
 
 ## Unit-Tests
@@ -124,7 +124,7 @@ bundle install
 - **Kein voller PDK-Workflow** – die Module haben `metadata.json`, `Gemfile.lock` und rspec-puppet Tests, aber `pdk validate`/`pdk test unit` ist der nächste Schritt.
 - **Kein echter Multi-Host-Cluster** – Primary/Secondary laufen als Docker-Container in einem Lab-Netz. Für Produktion wäre das auf getrennten Hosts/VMs.
 - **Kein Offsite-Backup** – Restic läuft lokal im Lab, mit Restore-Check und Retention. Produktion braucht zusätzlich Remote-Repository.
-- **Kein komplettes Monitoring-System** – Node Exporter liefert Metriken; Prometheus/Icinga/Checkmk als externer Collector ist der nächste Schritt.
+- **Kein komplettes Monitoring-System** – Node Exporter liefert Metriken und das Lab liefert Alert-/Check-Regeln; ein externer Prometheus/Icinga/Checkmk-Collector bleibt der nächste Schritt.
 - **Kein produktionsreifes Mail-TLS** – SMTP AUTH läuft im Lab ohne TLS, damit zuerst Postfix/Dovecot-SASL verstanden und getestet wird.
 - **Keine DKIM-Private-Key im Repo** – OpenDKIM generiert die Lab-Key lokal im Container; BIND bindet nur den öffentlichen `.txt`-Record ein.
 - **Kein Forge-Module-Reuse** – Ziel ist *Verstehen, wie es funktioniert*, nicht möglichst wenig Code.
@@ -137,7 +137,7 @@ bundle install
 
 ## Lernpfad
 
-*Aktuelle Version: **v1.2** – Kea DHCPv4 + Restic Retention eingeführt.*
+*Aktuelle Version: **v1.3** – Prometheus Alert-Regeln + Icinga-Style Health-Check eingeführt.*
 
 - [x] Repo-Struktur + docker-compose
 - [x] `isp_bind` Modul (Package + Service + named.conf.options)
@@ -163,6 +163,7 @@ bundle install
 - [x] **Backup/Restore**: Restic Snapshot + Restore-Check im Smoke-Test
 - [x] **Backup-Retention**: `restic forget --keep-* --prune` im Smoke-Test
 - [x] **Monitoring**: Node Exporter + eigene Lab-Health-Metriken
+- [x] **Alerting-Basis**: Prometheus Alert-Regeln + Icinga/Nagios-kompatibler Health-Check
 - [x] **Kea DHCPv4**: moderner DHCPv4-Server mit gerenderter Lab-Subnet-Konfiguration
 - [ ] Voller PDK-Workflow (`pdk validate`, `pdk test unit`)
 - [ ] Master/Agent statt apply

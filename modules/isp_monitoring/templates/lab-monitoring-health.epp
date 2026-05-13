@@ -1,0 +1,91 @@
+<%- |
+  String[1] $metrics_file,
+  Integer[1] $stale_seconds,
+  String[1] $check_script,
+| -%>
+#!/usr/bin/env bash
+# Managed by Puppet (module: isp_monitoring). Manual edits will be overwritten.
+set -euo pipefail
+
+metrics_file='<%= $metrics_file %>'
+check_script='<%= $check_script %>'
+stale_seconds=<%= $stale_seconds %>
+
+critical=()
+warning=()
+
+join_messages() {
+  local first=1
+  local item
+
+  for item in "$@"; do
+    if [ "${first}" -eq 1 ]; then
+      printf '%s' "${item}"
+      first=0
+    else
+      printf '; %s' "${item}"
+    fi
+  done
+}
+
+collect_zero_series() {
+  local metric="$1"
+  local label="$2"
+  local line
+
+  while IFS= read -r line; do
+    critical+=("${label}: ${line}")
+  done < <(awk -v metric="${metric}" '$1 ~ "^" metric "\\{" && $2 == 0 { print $0 }' "${metrics_file}")
+}
+
+metric_value() {
+  local metric="$1"
+
+  awk -v metric="${metric}" '$1 == metric { print $2; found=1; exit } END { if (!found) exit 1 }' "${metrics_file}"
+}
+
+if ! "${check_script}" >/dev/null 2>&1; then
+  echo "CRITICAL - lab-monitoring-check failed"
+  exit 2
+fi
+
+if [ ! -s "${metrics_file}" ]; then
+  echo "CRITICAL - metrics file missing or empty: ${metrics_file}"
+  exit 2
+fi
+
+collect_zero_series 'puppet_lab_service_up' 'service down'
+collect_zero_series 'puppet_lab_tcp_check_up' 'tcp check failed'
+
+dns_value="$(metric_value 'puppet_lab_dns_authoritative_up' || true)"
+if [ "${dns_value}" != "1" ]; then
+  critical+=("dns authoritative failed: ${dns_value:-missing}")
+fi
+
+backup_value="$(metric_value 'puppet_lab_backup_repository_ok' || true)"
+if [ "${backup_value}" != "1" ]; then
+  critical+=("backup repository failed: ${backup_value:-missing}")
+fi
+
+timestamp_value="$(metric_value 'puppet_lab_check_timestamp_seconds' || true)"
+if [[ ! "${timestamp_value}" =~ ^[0-9]+$ ]]; then
+  warning+=("monitoring timestamp missing")
+else
+  now="$(date +%s)"
+  age=$((now - timestamp_value))
+  if [ "${age}" -gt "${stale_seconds}" ]; then
+    warning+=("monitoring metrics stale: ${age}s")
+  fi
+fi
+
+if [ "${#critical[@]}" -gt 0 ]; then
+  printf 'CRITICAL - %s\n' "$(join_messages "${critical[@]}")"
+  exit 2
+fi
+
+if [ "${#warning[@]}" -gt 0 ]; then
+  printf 'WARNING - %s\n' "$(join_messages "${warning[@]}")"
+  exit 1
+fi
+
+echo "OK - lab monitoring metrics healthy"

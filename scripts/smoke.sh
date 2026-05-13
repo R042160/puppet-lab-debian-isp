@@ -163,6 +163,10 @@ check_in "${PRIMARY_CONTAINER}" "lab monitoring check writes metrics" bash -c "/
 check_in "${PRIMARY_CONTAINER}" "node exporter serves base metrics" bash -c "curl -sSf http://127.0.0.1:9100/metrics | grep -q '^node_uname_info'"
 check_in "${PRIMARY_CONTAINER}" "node exporter serves lab service metrics" bash -c "curl -sSf http://127.0.0.1:9100/metrics | grep -q 'puppet_lab_service_up{service=\"named\"} 1'"
 check_in "${PRIMARY_CONTAINER}" "node exporter serves lab backup metric" bash -c "curl -sSf http://127.0.0.1:9100/metrics | grep -q 'puppet_lab_backup_repository_ok 1'"
+check_in "${PRIMARY_CONTAINER}" "prometheus alert rules managed" bash -c "[ -f /etc/prometheus/rules/puppet-lab-alerts.yml ]"
+check_in "${PRIMARY_CONTAINER}" "prometheus alert rules cover service failure" bash -c "grep -q 'PuppetLabServiceDown' /etc/prometheus/rules/puppet-lab-alerts.yml"
+check_in "${PRIMARY_CONTAINER}" "prometheus alert rules cover stale metrics" bash -c "grep -q 'PuppetLabMonitoringCheckStale' /etc/prometheus/rules/puppet-lab-alerts.yml"
+check_in "${PRIMARY_CONTAINER}" "icinga-style lab health check passes" bash -c "/usr/local/sbin/lab-monitoring-health | grep -q '^OK - lab monitoring metrics healthy'"
 
 echo
 echo "==> Primary BIND9 authoritative answers"

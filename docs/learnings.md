@@ -415,3 +415,37 @@ Das macht Puppet/Salt zum nächsten logischen Schritt nach „Bash-Skripte mit K
 1. Prometheus-Alert-Regeln oder Icinga/Checkmk-ähnliche Check-Dokumentation.
 2. Optional: Bareos als Enterprise-Backup-Kontrast zu Restic.
 3. Danach BGP/OSPF-Fundamentals als Netzwerk-Gap.
+
+## v1.3 - Prometheus Alert-Regeln + Icinga-Style Health-Check (Mai 2026)
+
+### Was geändert wurde
+
+- `isp_monitoring` verwaltet jetzt zusätzlich:
+  - `/etc/prometheus/rules/puppet-lab-alerts.yml`
+  - `/usr/local/sbin/lab-monitoring-health`
+- Die Prometheus-Regeln decken die wichtigsten Lab-Signale ab:
+  - `PuppetLabMonitoringCheckStale`
+  - `PuppetLabServiceDown`
+  - `PuppetLabTCPCheckFailed`
+  - `PuppetLabDNSAuthoritativeFailed`
+  - `PuppetLabBackupRepositoryFailed`
+- Der Icinga/Nagios-kompatible Health-Check führt zuerst `/usr/local/sbin/lab-monitoring-check` aus und bewertet danach die Textfile-Metriken.
+- `scripts/smoke.sh` prüft jetzt:
+  - Alert-Regeldatei existiert
+  - Service-Down-Alert ist enthalten
+  - Stale-Metrics-Alert ist enthalten
+  - Health-Check liefert `OK`
+
+### Was ich dabei gelernt habe
+
+- **Metriken ohne Alerts sind noch kein Betrieb.** Erst Alert-Regeln machen aus Beobachtung eine Reaktionspflicht.
+- **Ein externer Prometheus muss nicht im Lab laufen, damit Regeln wertvoll sind.** Das Lab kann die Regeln als Artefakt liefern; ein echter Collector kann sie später übernehmen.
+- **Icinga/Checkmk-Denke ist anders als Prometheus-Denke.** Prometheus bewertet Zeitreihen; Icinga erwartet ein Kommando mit Exit-Code und kurzer Statuszeile.
+- **Beides zusammen ist stark fürs Portfolio.** Man sieht, dass dieselben Health-Signale als Metriken, Alerts und klassische Checks ausdrückbar sind.
+- **Stale-Metrics sind ein eigener Ausfall.** Wenn der Textfile Collector nicht aktualisiert wird, können alte grüne Werte gefährlich werden.
+
+### Was als Nächstes kommt (v1.4)
+
+1. Bareos als Enterprise-Backup-Kontrast zu Restic.
+2. Danach BGP/OSPF-Fundamentals.
+3. Optional: Alert-Regeln mit `promtool` validieren, sobald Prometheus im Lab installiert wird.

@@ -147,6 +147,11 @@ isp_backup::prune:        true
 isp_monitoring::listen_address: '0.0.0.0:9100'
 isp_monitoring::textfile_directory: '/var/lib/node_exporter/textfile_collector'
 isp_monitoring::metrics_file: '/var/lib/node_exporter/textfile_collector/puppet_lab.prom'
+isp_monitoring::alert_rules_directory: '/etc/prometheus/rules'
+isp_monitoring::alert_rules_file: '/etc/prometheus/rules/puppet-lab-alerts.yml'
+isp_monitoring::health_check_file: '/usr/local/sbin/lab-monitoring-health'
+isp_monitoring::alert_for: '2m'
+isp_monitoring::stale_seconds: 300
 isp_monitoring::services:
   - 'named'
   - 'master'
